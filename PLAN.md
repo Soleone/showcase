@@ -38,10 +38,10 @@ portfolio site     shows the result                  ← reads feed.json through
 
 ### M1. Pilot logdig to A
 
-- In logdig: `showcase init`, then add `media.motion`, `media.video`, `media.capture` and `demo.local` from what already exists.
-- `showcase check ~/src/products/logdig` reports A.
-- Feed back into showcase: `init` should prefill what it can find, e.g. animated hero → `media.motion`, `demo` / `demo:capture` npm scripts → `demo.local` / `media.capture`, and detect local-web-app if a reliable signal exists.
-- Ask before committing in logdig; it is its own repo.
+- Done in showcase: `init` sorts what the README embeds or links into `hero` (first still above the first section), `motion` (first loop) and `video`, and takes `demo.local` / `media.capture` from the `demo` and `capture` / `demo:capture` / `media:capture` scripts, run with the `packageManager` from package.json.
+- `init` on logdig prefills hero, motion, video, capture and local, and the unedited draft grades A (checked on a copy).
+- No local-web-app detection: podcaster's deps (Vite + React web app, Fastify host) look like any full-stack web-app, and nothing generic marks "needs this machine". Set `kind` by hand.
+- Left: run `showcase init ~/src/products/logdig` in logdig itself and commit it there. Ask first; it is its own repo.
 
 ### M2. Publish showcase
 

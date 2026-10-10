@@ -123,4 +123,18 @@ export async function isAnimatedWebp(file) {
   }
 }
 
+const stillExtensions = new Set([".png", ".jpg", ".jpeg", ".avif", ".svg"]);
+const videoExtensions = new Set([".mp4", ".webm", ".mov", ".m4v"]);
+
+// "still", "motion" (a silent loop), "video", or null when the reference is not media. A remote WebP cannot be read, so it is "unverified".
+export async function mediaType(project, reference, base = project.root) {
+  const extension = path.extname(reference.split(/[?#]/)[0]).toLowerCase();
+  if (videoExtensions.has(extension)) return "video";
+  if (extension === ".gif" || extension === ".apng") return "motion";
+  if (stillExtensions.has(extension)) return "still";
+  if (extension !== ".webp") return null;
+  const file = localPath(project, reference, base);
+  return file ? (await isAnimatedWebp(file) ? "motion" : "still") : "unverified";
+}
+
 export { exists };

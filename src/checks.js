@@ -1,9 +1,8 @@
 import path from "node:path";
-import { exists, isAnimatedWebp, localPath } from "./project.js";
+import { exists, localPath, mediaType } from "./project.js";
 
 export const tiers = ["D", "C", "B", "A", "S"];
 
-const motionExtensions = new Set([".gif", ".apng", ".mp4", ".webm", ".mov", ".m4v"]);
 const usageHeading = /install|usage|quick ?start|getting started|setup|how to (use|run)|try it|running/i;
 const maxReadmeWords = 1200;
 
@@ -52,11 +51,8 @@ async function missingFiles(project, references) {
 
 async function isMotion(project, { src, base, tag }) {
   if (tag === "video" || tag === "source") return true;
-  const extension = path.extname(src.split(/[?#]/)[0]).toLowerCase();
-  if (motionExtensions.has(extension)) return true;
-  if (extension !== ".webp") return false;
-  const file = localPath(project, src, base);
-  return file ? isAnimatedWebp(file) : "unverified";
+  const type = await mediaType(project, src, base);
+  return type === "unverified" ? type : type === "motion" || type === "video";
 }
 
 const pass = (detail) => ({ status: "pass", detail });
