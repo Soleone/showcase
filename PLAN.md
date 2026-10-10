@@ -60,15 +60,15 @@ portfolio site     shows the result                  ← reads feed.json through
 
 ### M4. Wire the portfolio site
 
-- `~/src/js/portfolio` (Next.js, live at https://soleone.xyz) hardcodes projects in `lib/portfolio.ts`.
-- Add a small `feedToProjects()` adapter onto its `Project` type and render hero/motion plus a "Try it" link.
-- Ship the schema plus TypeScript types for other sites. Build an adapter framework only when a second site needs it.
+- In progress (uncommitted in `~/src/js/portfolio`): `lib/showcase.ts` types the feed and `withShowcase()` enriches the curated list by repo URL (image from motion or hero, `live` → a "Try it" button) and appends feed projects that have a priority. `pnpm showcase` regenerates `public/showcase/`, which is committed so Vercel builds need no local checkouts.
+- LogDig added to the site's curated list.
+- Left: real feed once logdig has `live`, commit, deploy. Ship TypeScript types for other sites later; `lib/showcase.ts` is the first draft.
 
 ### M5. DNS and the first S
 
-- The user adds the wildcard CNAME at Namecheap.
-- Confirm Vercel verifies `logdig.soleone.xyz` through it.
-- Host logdig's replay there, then decide on the browser terminal (xterm.js plus an in-memory filesystem with sample sessions; check what logdig touches: fs, child_process, pi).
+- Done locally: `recipes/browser-terminal/` builds a static page that boots WebContainers and runs the real logdig CLI on ten seeded sessions, with a stand-in for Pi returning canned summaries. Verified in headless Chromium: status, dry run, a four-way parallel backfill, the daily note, doctor.
+- Left: Vercel login, deploy it as its own project, set `live` in logdig's showcase.json.
+- Then the user adds the wildcard CNAME at Namecheap and `logdig.soleone.xyz` is aliased to it.
 
 ### M6. The other flagships
 
