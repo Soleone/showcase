@@ -37,11 +37,13 @@ export function formatReport(report, { verbose = false } = {}) {
 export function formatSummary(reports) {
   const width = Math.max(...reports.map((report) => report.name.length), 7);
   const kindWidth = Math.max(...reports.map((report) => report.kind.length), 4);
-  const lines = [dim(`${"TIER"}  ${"PROJECT".padEnd(width)}  ${"KIND".padEnd(kindWidth)}  NEXT`)];
+  const targets = reports.some((report) => "target" in report);
+  const lines = [dim(`TIER  ${targets ? "TARGET  " : ""}${"PROJECT".padEnd(width)}  ${"KIND".padEnd(kindWidth)}  NEXT`)];
   for (const report of reports) {
     const blockers = report.nextSteps.filter((step) => step.required).map((step) => step.id);
     const next = report.next ? `${tierLabel(report.next)} ${dim("needs")} ${blockers.join(", ")}` : dim(nextLine(report));
-    lines.push(`${tierLabel(report.tier)}     ${report.name.padEnd(width)}  ${dim(report.kind.padEnd(kindWidth))}  ${next}`);
+    const target = targets ? `${report.target ? tierLabel(report.target) : dim("-")}       ` : "";
+    lines.push(`${tierLabel(report.tier)}     ${target}${report.name.padEnd(width)}  ${dim(report.kind.padEnd(kindWidth))}  ${next}`);
   }
   return lines.join("\n");
 }

@@ -2,6 +2,7 @@
 import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { evaluate, tiers } from "../src/checks.js";
+import { collect } from "../src/collect.js";
 import { init } from "../src/init.js";
 import { loadProject } from "../src/project.js";
 import { formatReport, formatSummary } from "../src/report.js";
@@ -13,11 +14,15 @@ const usage = `showcase ${version}: grade how demoable a project is, from D to S
 Usage:
   showcase check [path...]   Show the tier and what it takes to reach the next one
   showcase init [path]       Draft showcase.json from the README and package.json
+  showcase collect <config> --out <dir>
+                             Grade every project in a portfolio.config.json and write
+                             <dir>/feed.json plus copies of the local media
 
 Options:
   --json         Machine-readable output (check)
   --verbose, -v  List every check, not just the next steps (check)
-  --offline      Do not request the live URL (check)
+  --offline      Do not request the live URL (check, collect)
+  --out <dir>    Where to write feed.json and media/ (collect)
   --min <tier>   Exit with status 1 if any project is below this tier (check)
   --force        Overwrite an existing showcase.json (init)
   --dry-run      Print the draft without writing it (init)
@@ -52,6 +57,7 @@ async function main() {
       min: { type: "string" },
       force: { type: "boolean" },
       "dry-run": { type: "boolean" },
+      out: { type: "string" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean" },
     },
@@ -66,6 +72,14 @@ async function main() {
     const { file, manifest, errors } = await init(paths[0] ?? ".", { force: values.force, dryRun: values["dry-run"] });
     console.log(`${values["dry-run"] ? "Draft for" : "Wrote"} ${file}\n\n${JSON.stringify(manifest, null, 2)}`);
     if (errors.length) console.log(`\nFill in before it validates:\n${errors.map((error) => `  - ${error}`).join("\n")}`);
+    return;
+  }
+  if (command === "collect") {
+    if (paths.length !== 1 || !values.out) throw new Error("Usage: showcase collect <portfolio.config.json> --out <dir>");
+    const { file, feed, reports, warnings } = await collect(paths[0], { out: values.out, offline: values.offline });
+    if (reports.length) console.log(formatSummary(reports));
+    if (warnings.length) console.log(`\n${warnings.map((warning) => `! ${warning}`).join("\n")}`);
+    console.log(`\nWrote ${file} (${feed.projects.length} projects)`);
     return;
   }
   throw new Error(`Unknown command '${command}'. Run 'showcase --help'.`);

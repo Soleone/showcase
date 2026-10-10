@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 
-export const schemaUrl = new URL("../schema/showcase.schema.json", import.meta.url);
-export const schema = JSON.parse(readFileSync(schemaUrl, "utf8"));
+const load = (name) => JSON.parse(readFileSync(new URL(`../schema/${name}`, import.meta.url), "utf8"));
+export const schema = load("showcase.schema.json");
+export const portfolioSchema = load("portfolio.schema.json");
 
 const typeChecks = {
   object: (value) => value !== null && typeof value === "object" && !Array.isArray(value),
@@ -10,6 +11,7 @@ const typeChecks = {
   integer: Number.isInteger,
   number: (value) => typeof value === "number" && Number.isFinite(value),
   boolean: (value) => typeof value === "boolean",
+  null: (value) => value === null,
 };
 
 function isUri(value) {
@@ -20,10 +22,11 @@ function isUri(value) {
   }
 }
 
-// Validates the JSON Schema subset that showcase.schema.json uses, so the schema file stays the single source of truth.
+// Validates the JSON Schema subset that the schema files use, so they stay the single source of truth.
 export function validate(value, node = schema, path = "") {
   const at = path || "(root)";
-  if (node.type && !typeChecks[node.type](value)) return [`${at}: expected ${node.type}`];
+  const types = [node.type ?? []].flat();
+  if (types.length && !types.some((type) => typeChecks[type](value))) return [`${at}: expected ${types.join(" or ")}`];
   if (node.enum && !node.enum.includes(value)) return [`${at}: must be one of ${node.enum.join(", ")}`];
 
   const errors = [];

@@ -62,6 +62,25 @@ The project's facts for any portfolio to use. How much a portfolio cares about t
 
 The full contract is [schema/showcase.schema.json](schema/showcase.schema.json). Fields starting with `x-` are allowed for your own extensions.
 
+## Feed a portfolio site
+
+A portfolio picks its projects in `portfolio.config.json`, in the order it shows them ([schema](schema/portfolio.schema.json)):
+
+```json
+{
+  "projects": [
+    { "id": "local:products/logdig", "priority": "high", "type": "product", "path": "$SRC/products/logdig" },
+    { "id": "github:Soleone/gamefaqs", "title": "gamefaqs", "priority": "low", "repo": "https://github.com/Soleone/gamefaqs" }
+  ]
+}
+```
+
+```sh
+showcase collect portfolio.config.json --out public/showcase
+```
+
+This writes `feed.json` with one entry per project: its showcase.json facts (or a draft from the README when it has none), `tier`, `target` and `gap`, the required checks still failing up to the target. Priority sets the target: high S, mid A, low C, capped by `ceiling`. Local media is copied to `media/<slug>/` and the feed points at the copies. Projects without a local path are listed ungraded.
+
 ## Scripting
 
 `showcase check --json` prints every check with its status, detail and hint. `--min B` exits with status 1 when any project is below B, which is handy in CI. `--offline` skips requesting live URLs.

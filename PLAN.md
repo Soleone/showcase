@@ -51,10 +51,12 @@ portfolio site     shows the result                  ← reads feed.json through
 
 ### M3. Portfolio config and `showcase collect`
 
-- Define `portfolio.config.json`: the list of projects (local path or repo), `priority` (`high | mid | low`, the vocabulary the site already uses), order, and per-site overrides.
-- `showcase collect <config> --out <dir>` writes `feed.json` (manifests plus tier) and copies and optimizes media into `<dir>/media/`.
-- Use priority to set target tiers: high → S, mid → A or B, low → C. `check` can then show the gap to the target, not just the next tier.
-- The review desk will generate this config from its CSV (tracked in portfolio-review).
+- Done: the review desk already writes `portfolio.config.json` (`{ projects: [{ id, title, priority, type, path, repo }] }`, in portfolio order); `schema/portfolio.schema.json` now pins it, with nullable fields.
+- `showcase collect <config> --out <dir>` writes `feed.json`: portfolio fields, then showcase.json facts (or the init draft, `source: "draft"`), `tier`, `target` and `gap`. Local media is copied to `media/<slug>/hero.png` etc.; remote URLs stay.
+- Priority → target: high S, mid A, low C, capped by `ceiling`. collect's summary shows a TARGET column.
+- Projects with no local path (GitHub-only) are listed ungraded; cloning them is out of scope.
+- Not yet: optimizing media (needs ffmpeg, see Later), per-site overrides (wait for a second site), `check --config` for the gap outside collect.
+- Run on the real config: 29 projects, 21 graded. No priorities are set in the desk yet, so every target is empty.
 
 ### M4. Wire the portfolio site
 
@@ -81,3 +83,4 @@ A skill in `~/src/skills` for the parts that need taste: rewriting the README pi
 - LLM-judged README quality for C and B, beyond word counts.
 - `showcase capture` scaffolds: a VHS `.tape` for CLIs, a Playwright flow for web apps, ffmpeg to a looping WebP.
 - `showcase deploy` for the Vercel and subdomain step.
+- `collect --optimize`: resize and re-encode media with ffmpeg when it is on the PATH.

@@ -25,3 +25,9 @@ test("allows x- extension fields", () => {
 test("checks array items", () => {
   assert.deepEqual(validate({ title: "Demo", pitch: "Does a thing.", kind: "cli", tech: ["Node", 3] }), ["tech[1]: expected string"]);
 });
+
+test("supports nullable types for the portfolio config", async () => {
+  const { portfolioSchema } = await import("../src/schema.js");
+  assert.deepEqual(validate({ projects: [{ id: "a", title: null, path: null, repo: null, priority: null }] }, portfolioSchema), []);
+  assert.deepEqual(validate({ projects: [{ id: "a", path: 3 }] }, portfolioSchema), ["projects[0].path: expected string or null"]);
+});
