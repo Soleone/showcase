@@ -1,0 +1,14 @@
+{
+  "name": "showcase",
+  "description": "The showcase plugin: grade how demoable a project is and raise it.",
+  "owner": {
+    "name": "Soleone"
+  },
+  "plugins": [
+    {
+      "name": "showcase",
+      "source": "./",
+      "description": "Make a project demoable: grade it from D to S with the showcase CLI and fix what it reports, from the pitch to a live demo."
+    }
+  ]
+}

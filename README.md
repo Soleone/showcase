@@ -19,6 +19,18 @@ showcase terminal --serve     # build the in-browser terminal demo for a CLI
 
 No dependencies; needs Node 22 or later.
 
+## With an agent
+
+The package includes a `showcase` skill for coding agents. It does the parts `check` cannot measure (the pitch, the demo strategy, sample data, the recording), runs `check` before and after each step, and asks before anything that publishes.
+
+```sh
+pi install npm:@soleone/showcase                          # pi
+/plugin install showcase --marketplace Soleone/showcase   # Claude Code
+npx skills add Soleone/showcase                           # other agents
+```
+
+Then ask your agent to make a project demoable, or to take it up a tier.
+
 ## Tiers
 
 Each tier includes everything below it.

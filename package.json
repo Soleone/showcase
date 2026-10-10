@@ -14,7 +14,9 @@
     "portfolio",
     "readme",
     "demo",
-    "cli"
+    "cli",
+    "pi-package",
+    "agent-skill"
   ],
   "type": "module",
   "engines": {
@@ -35,6 +37,7 @@
     "src/",
     "schema/",
     "recipes/",
+    "skills/",
     "docs/playbook.md",
     "README.md",
     "LICENSE"
@@ -44,5 +47,10 @@
     "demo": "node bin/showcase.js check demo/projects/*",
     "demo:browser": "node bin/showcase.js terminal --serve",
     "media:capture": "node scripts/capture-demo.mjs"
+  },
+  "pi": {
+    "skills": [
+      "./skills"
+    ]
   }
 }

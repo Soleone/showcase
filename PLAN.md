@@ -33,13 +33,10 @@ portfolio site          shows the result                  ← reads feed.json th
 - **`terminal`**: the S route for a CLI. Builds a static page from the project's `demo/browser/terminal.json` that runs the real CLI in WebContainers (assets in `recipes/browser-terminal/`, shipped in the package). About 1 s to a ready shell when cached.
 - **`capture`**: runs `media.capture`, then checks `media.motion` (animated, loops, width, length, size). `@soleone/showcase/capture` records a web app as a looping WebP from agent-browser's stream; the project supplies `start`, `drive` and `verify`.
 - **[docs/playbook.md](docs/playbook.md)**: what worked taking a CLI and a web app to S.
+- **`showcase` agent skill** (`skills/showcase/SKILL.md`): the taste parts (pitch, demo strategy, sample data, recording), measured with `check` before and after, asking before anything that publishes. Ships in the package for pi (`pi.skills`), as a Claude Code plugin (`.claude-plugin/`) and for `npx skills add`. Tested by giving an agent a sample project with no mention of the skill; it found it on its own.
 - **showcase shows itself (A).** Four sample projects in `demo/projects`, one per tier from D to A (`npm run demo`), a browser terminal demo of the CLI in `demo/browser`, and `npm run media:capture`, which records that demo with `@soleone/showcase/capture` into `docs/media`. S is hosting `demo/browser` and setting `live`.
 
 ## Next
-
-### `/showcase` agent skill
-
-For the parts that need taste: rewriting the README pitch, choosing a demo strategy, writing seed data. Build it on the playbook. It runs `showcase check` before and after so the improvement is measured.
 
 ### More recipes, one per route
 
