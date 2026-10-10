@@ -9,7 +9,7 @@ node recipes/browser-terminal/build.js recipes/browser-terminal/logdig --out dis
 A recipe folder holds `terminal.json`:
 
 - `mount`: target path in the sandbox → `{ from, include }`. `from` may use `~` and `$VARS`; `include` limits the top-level entries copied.
-- `env`: values may use `~` (the sandbox home) and `$PATH`.
+- `env`: values may use `~` (the sandbox home, always `/home/demo`) and `$PATH` (costs one extra process at boot; write the PATH out instead).
 - `setup`: commands run before the shell opens, e.g. seeding sample data dated relative to today.
 - `title`, `pitch`, `repo`, `welcome`, `hints` (buttons that type a command), `disclosure`, `theme` (CSS variables).
 
@@ -17,7 +17,7 @@ The output is static: `index.html`, `files.json`, `terminal.json` and a `vercel.
 
 Sandbox quirks found so far:
 
-- Mounted files are not executable; `chmod +x` them in `setup`.
+- Mounted files are not executable; `chmod` them from a setup script (one process is faster than several setup commands).
 - Extensionless ES modules exit silently, so command shims are CommonJS that `import()` the real entry point.
 - A top-level `for await` fails to parse; read streams with events.
 - Model calls: point the project at a stand-in (logdig's `piCommand`) that returns canned output, so nothing leaves the browser.

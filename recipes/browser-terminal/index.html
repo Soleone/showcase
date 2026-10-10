@@ -4,63 +4,102 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Try it in your browser</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/css/xterm.css">
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@webcontainer/api@1.6.4/+esm" crossorigin>
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/+esm" crossorigin>
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@xterm/addon-webgl@0.19.0/+esm" crossorigin>
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.11.0/+esm" crossorigin>
+  <link rel="preload" href="files.json" as="fetch" crossorigin>
+  <link rel="preload" href="terminal.json" as="fetch" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;600&display=swap" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/css/xterm.css" crossorigin>
   <style>
+    /* Gilt (github.com/Soleone/omarchy-gilt-theme): sovereign gold on cool obsidian, dark first. */
     :root {
-      --page: #d7efdf;
-      --ink: #172f30;
-      --muted: #506564;
-      --accent: #24654b;
-      --terminal: #152b2b;
-      --terminal-ink: #e4efe8;
-      --chip: #fafbf7;
+      color-scheme: dark;
+      --page: #0D0F12;
+      --ink: #D8D1C0;
+      --ink-strong: #F5EBD2;
+      --muted: #918977;
+      --accent: #D4AF37;
+      --surface: #181B20;
+      --line: #342D1B;
+      --terminal: #090A0C;
+    }
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dark"]) {
+        color-scheme: light;
+        --page: #F5EBD2;
+        --ink: #0D0F12;
+        --ink-strong: #0D0F12;
+        --muted: #716957;
+        --accent: #8A6240;
+        --surface: #E6DECB;
+        --line: #D8D1C0;
+      }
+    }
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --page: #F5EBD2;
+      --ink: #0D0F12;
+      --ink-strong: #0D0F12;
+      --muted: #716957;
+      --accent: #8A6240;
+      --surface: #E6DECB;
+      --line: #D8D1C0;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; }
     body {
       background: var(--page);
       color: var(--ink);
-      font: 16px/1.5 Lato, "Helvetica Neue", Arial, sans-serif;
+      font: 16px/1.5 Geist, ui-sans-serif, system-ui, sans-serif;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
     }
-    header, main, footer { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 16px; }
-    header { padding-top: 32px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
-    h1 { margin: 0; font-size: clamp(28px, 5vw, 44px); line-height: 1.05; letter-spacing: -0.03em; }
-    .pitch { margin: 8px 0 0; color: var(--muted); font-size: 18px; max-width: 60ch; }
-    a { color: var(--accent); }
+    header, main, footer { width: 100%; max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+    header { padding-top: 32px; display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 24px; }
+    h1 { margin: 0; color: var(--ink-strong); font-size: clamp(28px, 5vw, 44px); font-weight: 600; line-height: 1.05; letter-spacing: -0.03em; }
+    .pitch { margin: 8px 0 0; color: var(--muted); font-size: 17px; max-width: 62ch; text-wrap: pretty; }
+    a { color: var(--accent); text-underline-offset: 3px; }
     .repo { font-size: 15px; white-space: nowrap; }
     main { flex: 1; display: flex; flex-direction: column; gap: 12px; padding-top: 24px; padding-bottom: 16px; }
     .hints { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     .hints span { color: var(--muted); font-size: 14px; margin-right: 4px; }
     .hints button {
-      font: 13px/1 "DejaVu Sans Mono", ui-monospace, Menlo, Consolas, monospace;
-      background: var(--chip);
+      font: 13px/1 "Geist Mono", ui-monospace, Menlo, Consolas, monospace;
+      background: var(--surface);
       color: var(--ink);
-      border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
-      border-radius: 4px;
-      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 11px;
       cursor: pointer;
+      transition: border-color 120ms, color 120ms;
     }
-    .hints button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-    .hints button:disabled { opacity: 0.5; cursor: wait; }
-    .terminal {
+    .hints button:hover:not(:disabled), .hints button:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+    .hints button:disabled { opacity: 0.45; cursor: progress; }
+    .panel {
       flex: 1;
-      min-height: 420px;
+      min-height: 440px;
       display: flex;
       background: var(--terminal);
-      border-radius: 6px;
-      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 6px 6px 14px;
       overflow: hidden;
     }
     #terminal { flex: 1; min-width: 0; }
     #terminal .xterm, #terminal .xterm-viewport, #terminal .xterm-scrollable-element { background-color: var(--terminal) !important; }
+    /* Focus shows on the panel edge, not as a ring inside the terminal. */
+    #terminal .xterm:focus, #terminal .xterm :focus { outline: none; }
+    .panel { transition: border-color 120ms; }
+    .panel:focus-within { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
     footer { padding-bottom: 24px; color: var(--muted); font-size: 13px; }
     @media (max-width: 600px) {
       header { padding-top: 20px; }
       .pitch { font-size: 16px; }
-      .terminal { min-height: 360px; padding: 8px; }
+      .panel { min-height: 380px; padding: 8px 2px 2px 8px; }
     }
   </style>
 </head>
@@ -74,16 +113,31 @@
   </header>
   <main>
     <div class="hints" id="hints"><span>Try</span></div>
-    <div class="terminal"><div id="terminal"></div></div>
+    <div class="panel"><div id="terminal"></div></div>
   </main>
   <footer id="disclosure">Runs entirely in your browser in a WebContainers Node.js sandbox.</footer>
 
   <script type="module">
     import { WebContainer } from "https://cdn.jsdelivr.net/npm/@webcontainer/api@1.6.4/+esm";
-    import { Terminal } from "https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/+esm";
-    import { FitAddon } from "https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.11.0/+esm";
 
-    const config = await (await fetch("terminal.json")).json();
+    // Start the slow parts at once and in parallel: the sandbox boot, the files, the config, the terminal code and the font.
+    // The sandbox home is always /home/demo, so recipes can write absolute paths into their settings.
+    const started = performance.now();
+    const timings = {};
+    const mark = (name) => { timings[name] = Math.round(performance.now() - started); };
+    window.demoTimings = timings;
+    const booting = crossOriginIsolated ? WebContainer.boot({ workdirName: "demo" }) : null;
+    const filesLoad = fetch("files.json").then((response) => response.json());
+    const configLoad = fetch("terminal.json").then((response) => response.json());
+    const terminalCode = Promise.all([
+      import("https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/+esm"),
+      import("https://cdn.jsdelivr.net/npm/@xterm/addon-webgl@0.19.0/+esm"),
+      import("https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.11.0/+esm"),
+    ]);
+    const fontLoad = Promise.race([document.fonts.load('14px "Geist Mono"'), new Promise((resolve) => setTimeout(resolve, 1200))]);
+
+    const config = await configLoad;
+    const seedLoad = config.seed ? import(new URL(config.seed, location.href)) : null;
     document.title = `${config.title}: try it in your browser`;
     document.getElementById("title").textContent = config.title;
     document.getElementById("pitch").textContent = config.pitch ?? "";
@@ -91,20 +145,40 @@
     if (config.disclosure) document.getElementById("disclosure").textContent = config.disclosure;
     for (const [name, value] of Object.entries(config.theme ?? {})) document.documentElement.style.setProperty(`--${name}`, value);
 
-    const styles = getComputedStyle(document.documentElement);
+    // Gilt's ANSI palette; a recipe can override any key with terminalTheme.
+    const gilt = {
+      background: "#090A0C", foreground: "#D8D1C0", cursor: "#D4AF37", cursorAccent: "#090A0C",
+      selectionBackground: "#342D1B", selectionForeground: "#F5EBD2",
+      black: "#181B20", red: "#BC6060", green: "#7FA37A", yellow: "#D4AF37",
+      blue: "#6F8FAF", magenta: "#9A7AA0", cyan: "#72A5A4", white: "#D8D1C0",
+      brightBlack: "#716957", brightRed: "#D47474", brightGreen: "#9DBB8E", brightYellow: "#E7C968",
+      brightBlue: "#8FAECC", brightMagenta: "#B596B8", brightCyan: "#91C0BD", brightWhite: "#F5EBD2",
+    };
+    const [[{ Terminal }, { WebglAddon }, { FitAddon }]] = await Promise.all([terminalCode, fontLoad]);
     const term = new Terminal({
       cursorBlink: true,
       convertEol: true,
-      fontFamily: '"DejaVu Sans Mono", ui-monospace, Menlo, Consolas, monospace',
+      fontFamily: '"Geist Mono", ui-monospace, Menlo, Consolas, monospace',
       fontSize: 14,
-      lineHeight: 1.2,
-      theme: { background: styles.getPropertyValue("--terminal").trim(), foreground: styles.getPropertyValue("--terminal-ink").trim() },
+      lineHeight: 1.25,
+      scrollback: 5000,
+      theme: { ...gilt, ...config.terminalTheme },
     });
     const fit = new FitAddon();
     term.loadAddon(fit);
     term.open(document.getElementById("terminal"));
+    // GPU rendering; the DOM renderer takes over if WebGL is unavailable or its context is lost.
+    try {
+      const webgl = new WebglAddon();
+      webgl.onContextLoss(() => webgl.dispose());
+      term.loadAddon(webgl);
+      timings.renderer = "webgl";
+    } catch {
+      timings.renderer = "dom";
+    }
     fit.fit();
-    // For automated checks: the visible terminal text.
+    mark("terminal");
+    // For automated checks: the terminal text.
     window.terminalText = () => {
       const buffer = term.buffer.active;
       return Array.from({ length: buffer.length }, (_, row) => buffer.getLine(row)?.translateToString(true) ?? "").join("\n");
@@ -123,6 +197,14 @@
       hints.append(button);
     }
 
+    function merge(tree, extra) {
+      for (const [name, node] of Object.entries(extra)) {
+        if (node.directory && tree[name]?.directory) merge(tree[name].directory, node.directory);
+        else tree[name] = node;
+      }
+      return tree;
+    }
+
     async function run(container, command, env) {
       const [name, ...args] = command.split(" ");
       const child = await container.spawn(name, args, { env });
@@ -134,40 +216,53 @@
     }
 
     try {
-      if (!crossOriginIsolated) throw new Error("This page needs cross-origin isolation (COOP/COEP headers) to run the sandbox.");
-      term.write(dim("Booting a Node.js sandbox in your browser…\n"));
-      const [container, files] = await Promise.all([
-        WebContainer.boot({ workdirName: config.workdir ?? "demo" }),
-        fetch("files.json").then((response) => response.json()),
-      ]);
-      await container.mount(files);
+      if (!booting) throw new Error("This page needs cross-origin isolation (COOP/COEP headers) to run the sandbox.");
+      term.write(dim("Booting a Node.js sandbox in your browser…"));
+      const [container, files, seedModule] = await Promise.all([booting, filesLoad, seedLoad]);
+      mark("boot");
+      // A recipe's seed adds files computed at visit time (dates relative to today) without starting a process.
+      await container.mount(seedModule ? merge(files, seedModule.default(files)) : files);
+      mark("mount");
       const home = container.workdir;
-      const basePath = await run(container, "node -e process.stdout.write(process.env.PATH||'')", {});
-      // Env values may use ~ for the sandbox home and $PATH for the default PATH.
+      // Env values may use ~ for the sandbox home and $PATH for the default PATH (which costs one extra process).
+      const values = Object.entries(config.env ?? {});
+      const basePath = values.some(([, value]) => value.includes("$PATH"))
+        ? (await run(container, "node -p process.env.PATH", {})).trim()
+        : "/usr/local/bin:/usr/bin:/bin";
       const expand = (value) => value.replace(/(^|:)~(?=\/|:|$)/g, `$1${home}`).replace("$PATH", basePath);
-      const env = { HOME: home, PATH: basePath, ...Object.fromEntries(Object.entries(config.env ?? {}).map(([key, value]) => [key, expand(value)])) };
-      for (const command of config.setup ?? []) await run(container, command, env);
+      const env = { HOME: home, PATH: basePath, ...Object.fromEntries(values.map(([key, value]) => [key, expand(value)])) };
+      // Setup runs while the shell starts; the shell itself never needs the seeded files.
+      const setup = (async () => {
+        for (const command of config.setup ?? []) await run(container, command, env);
+        mark("setup");
+      })();
 
       term.reset();
       term.write(`${(config.welcome ?? []).join("\n")}\n\n`);
       const shell = await container.spawn("jsh", { env, terminal: { cols: term.cols, rows: term.rows } });
-      // Buttons wait for the first prompt, so a click never types ahead of the shell.
-      let prompted = false;
+      let prompted;
+      const firstPrompt = new Promise((resolve) => { prompted = resolve; }).then(() => mark("prompt"));
       shell.output.pipeTo(new WritableStream({
         write(data) {
           term.write(data);
-          if (prompted) return;
-          prompted = true;
-          for (const button of hints.querySelectorAll("button")) button.disabled = false;
-          window.demoReady = true;
+          prompted();
         },
       }));
+      // Buttons wait for the first prompt and the setup, so a click never runs ahead of either.
+      Promise.all([firstPrompt, setup]).then(() => {
+        for (const button of hints.querySelectorAll("button")) button.disabled = false;
+        mark("ready");
+        window.demoReady = true;
+      }, (error) => {
+        term.write(red(`\nSetup failed: ${error.message}\n`));
+        window.demoError = error.message;
+      });
       input = shell.input.getWriter();
       term.onData((data) => input.write(data));
       new ResizeObserver(() => {
         fit.fit();
         shell.resize({ cols: term.cols, rows: term.rows });
-      }).observe(document.querySelector(".terminal"));
+      }).observe(document.querySelector(".panel"));
       term.focus();
     } catch (error) {
       term.write(red(`\n${error.message}\n`));

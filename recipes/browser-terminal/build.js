@@ -45,6 +45,7 @@ async function build(recipeDir, out) {
   await mkdir(out, { recursive: true });
   await copyFile(path.join(here, "index.html"), path.join(out, "index.html"));
   await writeFile(path.join(out, "files.json"), JSON.stringify(files));
+  if (config.seed) await copyFile(path.join(recipeDir, config.seed), path.join(out, config.seed));
   await writeFile(path.join(out, "terminal.json"), `${JSON.stringify(config, null, 2)}\n`);
   await writeFile(path.join(out, "vercel.json"), `${JSON.stringify({
     headers: [{ source: "/(.*)", headers: Object.entries(isolationHeaders).map(([key, value]) => ({ key, value })) }],

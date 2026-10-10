@@ -3,7 +3,6 @@
   "pitch": "Your Pi history. A journal you can read. This is the real CLI, running in your browser on ten sample sessions.",
   "repo": "https://github.com/Soleone/logdig",
   "disclosure": "The real LogDig CLI runs in a WebContainers Node.js sandbox in your browser. Sessions are synthetic and a stand-in for Pi returns canned summaries, so nothing is sent to a model. Reload to start over.",
-  "workdir": "demo",
   "mount": {
     "node_modules/logdig": {
       "from": "~/src/products/logdig",
@@ -20,12 +19,11 @@
     }
   },
   "env": {
-    "PATH": "~/bin:$PATH",
+    "PATH": "~/bin:/usr/local/bin:/usr/bin:/bin",
     "LOGDIG_ICONS": "0"
   },
   "setup": [
-    "chmod +x bin/logdig bin/pi",
-    "node .demo/seed.js"
+    "chmod +x bin/logdig bin/pi"
   ],
   "welcome": [
     "\u001b[1mLogDig\u001b[0m turns saved Pi sessions into daily Markdown notes, grouped by project.",
@@ -45,5 +43,6 @@
     "cat vault/Daily/*.md",
     "logdig doctor",
     "logdig help"
-  ]
+  ],
+  "seed": "seed.js"
 }
