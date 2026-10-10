@@ -17,6 +17,7 @@ npx @soleone/showcase check   # grade the project in the current directory, no i
 npm i -g @soleone/showcase    # or install it to get the `showcase` command
 showcase check                # grade the project in the current directory
 showcase check ~/src/a ~/src/b --verbose
+showcase check ~/src/a ~/src/b --matrix   # every check against every project
 showcase init                 # draft showcase.json from the README and package.json
 ```
 

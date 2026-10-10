@@ -5,7 +5,7 @@ import { evaluate, tiers } from "../src/checks.js";
 import { collect } from "../src/collect.js";
 import { init } from "../src/init.js";
 import { loadProject } from "../src/project.js";
-import { formatReport, formatSummary } from "../src/report.js";
+import { formatMatrix, formatReport, formatSummary } from "../src/report.js";
 
 const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 
@@ -21,6 +21,7 @@ Usage:
 Options:
   --json         Machine-readable output (check)
   --verbose, -v  List every check, not just the next steps (check)
+  --matrix       Every check against every project, one column each (check)
   --offline      Do not request the live URL (check, collect)
   --out <dir>    Where to write feed.json and media/ (collect)
   --min <tier>   Exit with status 1 if any project is below this tier (check)
@@ -41,6 +42,7 @@ async function check(paths, values) {
   const reports = await Promise.all((paths.length ? paths : ["."]).map(async (root) => evaluate(await loadProject(root), { offline: values.offline })));
 
   if (values.json) console.log(JSON.stringify(reports, null, 2));
+  else if (values.matrix) console.log(formatMatrix(reports));
   else if (reports.length === 1 || values.verbose) console.log(reports.map((report) => formatReport(report, values)).join("\n\n"));
   else console.log(formatSummary(reports));
 
@@ -53,6 +55,7 @@ async function main() {
     options: {
       json: { type: "boolean" },
       verbose: { type: "boolean", short: "v" },
+      matrix: { type: "boolean" },
       offline: { type: "boolean" },
       min: { type: "string" },
       force: { type: "boolean" },

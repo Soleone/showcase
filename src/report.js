@@ -47,3 +47,23 @@ export function formatSummary(reports) {
   }
   return lines.join("\n");
 }
+
+// One row per check, one column per project, so the same gap across projects lines up.
+export function formatMatrix(reports) {
+  const names = reports.map((report) => report.name.length > 12 ? `${report.name.slice(0, 11)}…` : report.name);
+  const widths = names.map((name) => Math.max(name.length, 4));
+  const checks = reports[0].checks;
+  const labelWidth = Math.max(...checks.map((result) => result.id.length + (result.required ? 0 : 1)), 5);
+  const cell = (text, index, painted = text) => `${" ".repeat(widths[index] - String(text).length)}${painted}`;
+  const lines = [
+    dim(`   ${"CHECK".padEnd(labelWidth)}  ${names.map((name, index) => cell(name, index)).join("  ")}`),
+    `   ${bold("tier".padEnd(labelWidth))}  ${reports.map((report, index) => cell(report.tier, index, tierLabel(report.tier))).join("  ")}`,
+  ];
+  checks.forEach((check, row) => {
+    const label = `${check.id}${check.required ? "" : "*"}`;
+    if (row === 0 || checks[row - 1].tier !== check.tier) lines.push("");
+    lines.push(`${dim(check.tier)}  ${label.padEnd(labelWidth)}  ${reports.map((report, index) => cell("x", index, mark(report.checks[row]))).join("  ")}`);
+  });
+  lines.push("", dim("✓ pass  ✗ missing  · advice missing (* advice only)  ? not verified"));
+  return lines.join("\n");
+}

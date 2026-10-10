@@ -26,6 +26,15 @@ test("check prints a summary for several projects and details for one", async ()
   assert.match(single.stdout, /To reach A:/);
 });
 
+test("check --matrix lines up every check against every project", async () => {
+  const [polished, empty] = await Promise.all([fixture(polishedFiles), fixture({})]);
+  const { stdout } = await run("check", polished, empty, "--matrix", "--offline");
+  assert.match(stdout, /^\s+CHECK\s+showcase-te…\s+showcase-te…/);
+  assert.match(stdout, /\n\s+tier\s+B\s+D\n/);
+  assert.match(stdout, /\nB  readme.hero\s+✓\s+✗\n/);
+  assert.match(stdout, /\nA  media.capture\*\s+·\s+·\n/);
+});
+
 test("check --min fails when a project is below the tier", async () => {
   const root = await fixture(polishedFiles);
   assert.equal((await run("check", root, "--offline", "--min", "B")).code, undefined);
