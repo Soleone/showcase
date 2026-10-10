@@ -67,3 +67,9 @@ export function formatMatrix(reports) {
   lines.push("", dim("✓ pass  ✗ missing  · advice missing (* advice only)  ? not verified"));
   return lines.join("\n");
 }
+
+const inspectMarks = { pass: green("✓"), warn: yellow("!"), fail: red("✗") };
+
+export function formatInspection(results) {
+  return results.map((result) => `  ${inspectMarks[result.status]} ${result.detail}`).join("\n");
+}

@@ -4,8 +4,9 @@ import { parseArgs } from "node:util";
 import { evaluate, tiers } from "../src/checks.js";
 import { collect } from "../src/collect.js";
 import { init } from "../src/init.js";
+import { inspectMotion, runCapture } from "../src/inspect.js";
 import { loadProject } from "../src/project.js";
-import { formatMatrix, formatReport, formatSummary } from "../src/report.js";
+import { formatInspection, formatMatrix, formatReport, formatSummary } from "../src/report.js";
 
 const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 
@@ -17,6 +18,7 @@ Usage:
   showcase collect <config> --out <dir>
                              Grade every project in a portfolio.config.json and write
                              <dir>/feed.json plus copies of the local media
+  showcase capture [path]    Re-record the media with media.capture, then check media.motion
 
 Options:
   --json         Machine-readable output (check)
@@ -27,6 +29,7 @@ Options:
   --min <tier>   Exit with status 1 if any project is below this tier (check)
   --force        Overwrite an existing showcase.json (init)
   --dry-run      Print the draft without writing it (init)
+  --no-record    Only check the existing media.motion (capture)
   --help, -h     Show this help
   --version      Show the version
 
@@ -49,6 +52,24 @@ async function check(paths, values) {
   if (values.min && reports.some((report) => tiers.indexOf(report.tier) < tiers.indexOf(values.min))) process.exitCode = 1;
 }
 
+async function capture(paths, values) {
+  if (paths.length > 1) throw new Error("capture takes a single path");
+  const project = await loadProject(paths[0] ?? ".");
+  const media = project.manifest?.data?.media ?? {};
+  if (!values["no-record"] && !media.capture) throw new Error(`Set media.capture in ${project.manifest?.file ?? "showcase.json"} to the command that records the media.`);
+  if (!media.motion) throw new Error("Set media.motion in showcase.json to the file the capture writes.");
+  let since;
+  if (!values["no-record"]) {
+    since = Date.now();
+    console.log(`Recording with ${media.capture}\n`);
+    await runCapture(project, media.capture);
+    console.log("");
+  }
+  const results = await inspectMotion(project, media.motion, { since });
+  console.log(`${media.motion}\n${formatInspection(results)}`);
+  if (results.some((result) => result.status === "fail")) process.exitCode = 1;
+}
+
 async function main() {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
@@ -60,6 +81,7 @@ async function main() {
       min: { type: "string" },
       force: { type: "boolean" },
       "dry-run": { type: "boolean" },
+      "no-record": { type: "boolean" },
       out: { type: "string" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean" },
@@ -70,6 +92,7 @@ async function main() {
   if (values.version) return console.log(version);
   if (values.help || !command) return console.log(usage);
   if (command === "check") return check(paths, values);
+  if (command === "capture") return capture(paths, values);
   if (command === "init") {
     if (paths.length > 1) throw new Error("init takes a single path");
     const { file, manifest, errors } = await init(paths[0] ?? ".", { force: values.force, dryRun: values["dry-run"] });

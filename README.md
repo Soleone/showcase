@@ -3,11 +3,11 @@
 Grade how demoable a project is, from D to S, and get the exact next steps to raise it.
 
 ```
-$ showcase check ~/src/products/*
+$ showcase check ~/code/*
 TIER  PROJECT         KIND               NEXT
-B     vibestep        desktop-app        A needs manifest, media.motion, demo.local
-A     LogDig          cli                S needs live
-C     podcaster       other              B needs readme.hero
+B     beatbox         web-app            A needs manifest, media.motion, demo.local
+A     notecli         cli                S needs live
+C     voice-notes     local-web-app      B needs readme.hero
 ```
 
 ## Quick start
@@ -16,9 +16,10 @@ C     podcaster       other              B needs readme.hero
 npx @soleone/showcase check   # grade the project in the current directory, no install
 npm i -g @soleone/showcase    # or install it to get the `showcase` command
 showcase check                # grade the project in the current directory
-showcase check ~/src/a ~/src/b --verbose
-showcase check ~/src/a ~/src/b --matrix   # every check against every project
+showcase check ~/code/a ~/code/b --verbose
+showcase check ~/code/a ~/code/b --matrix   # every check against every project
 showcase init                 # draft showcase.json from the README and package.json
+showcase capture              # re-record the media with media.capture and check the loop
 ```
 
 No dependencies; needs Node 22 or later.
@@ -44,25 +45,25 @@ The project's facts for any portfolio to use. How much a portfolio cares about t
 ```json
 {
   "$schema": "https://raw.githubusercontent.com/Soleone/showcase/main/schema/showcase.schema.json",
-  "title": "LogDig",
-  "pitch": "Your Pi history. A journal you can read.",
+  "title": "notecli",
+  "pitch": "Turns a folder of session logs into a daily journal you can read.",
   "kind": "cli",
   "year": 2026,
   "tech": ["Node.js"],
-  "repo": "https://github.com/Soleone/logdig",
-  "live": "https://logdig.soleone.xyz",
+  "repo": "https://github.com/you/notecli",
+  "live": "https://notecli.example.com",
   "media": {
-    "hero": "docs/launch/assets/hero.png",
-    "motion": "docs/launch/assets/demo.webp",
-    "video": "docs/launch/assets/demo.mp4",
+    "hero": "docs/media/hero.png",
+    "motion": "docs/media/demo.webp",
+    "video": "docs/media/demo.mp4",
     "capture": "npm run demo:capture"
   },
   "demo": {
     "strategy": "browser-terminal",
     "local": "npm run demo",
     "externals": [
-      { "name": "LLM summaries via Pi", "type": "model", "seam": "piCommand setting", "standIn": "canned",
-        "note": "A stand-in for Pi returns canned summaries, so nothing is sent to a model." }
+      { "name": "LLM summaries", "type": "model", "seam": "modelCommand setting", "standIn": "canned",
+        "note": "A stand-in returns canned summaries, so nothing is sent to a model." }
     ]
   }
 }
@@ -79,8 +80,8 @@ A portfolio picks its projects in `portfolio.config.json`, in the order it shows
 ```json
 {
   "projects": [
-    { "id": "local:products/logdig", "priority": "high", "type": "product", "path": "$SRC/products/logdig" },
-    { "id": "github:Soleone/gamefaqs", "title": "gamefaqs", "priority": "low", "repo": "https://github.com/Soleone/gamefaqs" }
+    { "id": "local:notecli", "priority": "high", "type": "product", "path": "$HOME/code/notecli" },
+    { "id": "github:you/old-library", "title": "old-library", "priority": "low", "repo": "https://github.com/you/old-library" }
   ]
 }
 ```
@@ -90,6 +91,27 @@ showcase collect portfolio.config.json --out public/showcase
 ```
 
 This writes `feed.json` with one entry per project: its showcase.json facts (or a draft from the README when it has none), `tier`, `target` and `gap`, the required checks still failing up to the target. Priority sets the target: high S, mid A, low C, capped by `ceiling`. Local media is copied to `media/<slug>/` and the feed points at the copies. Projects without a local path are listed ungraded.
+
+## Keep the media fresh
+
+Set `media.capture` to the command that re-records your screenshots and loops, and `showcase capture` runs it, then checks `media.motion`: animated, loops forever, at least 640 px wide, 3 to 30 s, under 3 MB. `--no-record` checks the file you have.
+
+For a web app, `@soleone/showcase/capture` writes that command for you, minus the parts only your app knows. It records a fresh browser session with [agent-browser](https://github.com/vercel-labs/agent-browser) and encodes a looping WebP with FFmpeg (both on the PATH); you write how to start, drive and judge a take:
+
+```js
+import { record } from "@soleone/showcase/capture";
+
+await record({
+  url: "https://your-app.example.com",
+  out: "docs/media/demo.webp",
+  start: (page) => page.waitFor(`document.querySelector("main")`),
+  drive: async (page) => { await page.click("Play"); await page.sleep(10_000); },
+  verify: async (page) => (await page.eval(`document.title`)).includes("Done") ? undefined : "did not finish",
+  attempts: 3,
+});
+```
+
+[docs/playbook.md](docs/playbook.md) has what to watch for when recording, and the rest of what it took to get projects to S.
 
 ## Scripting
 

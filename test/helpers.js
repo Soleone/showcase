@@ -51,3 +51,21 @@ export const manifest = {
   media: { hero: "docs/hero.png", motion: "docs/loop.webp" },
   demo: { local: "npm run demo" },
 };
+
+// A container-only animated WebP: enough chunks for showcase to read its size, loop count and frame durations.
+export function animatedWebp({ width = 960, height = 540, loops = 0, durations = [500, 500, 500, 500, 500, 500, 500, 500] } = {}) {
+  const chunk = (type, data) => Buffer.concat([Buffer.from(type, "ascii"), Buffer.from(new Uint32Array([data.length]).buffer), data, Buffer.alloc(data.length % 2)]);
+  const vp8x = Buffer.alloc(10);
+  vp8x[0] = 0x02;
+  vp8x.writeUIntLE(width - 1, 4, 3);
+  vp8x.writeUIntLE(height - 1, 7, 3);
+  const anim = Buffer.alloc(6);
+  anim.writeUInt16LE(loops, 4);
+  const frames = durations.map((ms) => {
+    const anmf = Buffer.alloc(16);
+    anmf.writeUIntLE(ms, 12, 3);
+    return chunk("ANMF", anmf);
+  });
+  const body = Buffer.concat([Buffer.from("WEBP", "ascii"), chunk("VP8X", vp8x), chunk("ANIM", anim), ...frames]);
+  return Buffer.concat([Buffer.from("RIFF", "ascii"), Buffer.from(new Uint32Array([body.length]).buffer), body]);
+}

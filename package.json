@@ -23,6 +23,10 @@
   "publishConfig": {
     "access": "public"
   },
+  "exports": {
+    "./capture": "./src/capture.js",
+    "./package.json": "./package.json"
+  },
   "bin": {
     "showcase": "./bin/showcase.js"
   },
