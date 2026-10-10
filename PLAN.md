@@ -77,15 +77,17 @@ portfolio site     shows the result                  ← reads feed.json through
 
 - vibestep (Oct 10): live at vibestep.soleone.xyz. A first visit opens Play with the built-in song "Bouncer" (Of Far Different Nature, CC0, on R2) and its published map, and the welcome dialog plays it in one click. Left for S: map more than the current 16 kicks (15-22 s of 94 s), then showcase.json (web-app, live URL, the YouTube companion as an external) and a looping gameplay clip for motion.
 
+- vibestep reached S (Oct 10): showcase.json, the 36-note Bouncer map and a scripted gameplay loop (`npm run media:capture`). What worked and what cost time is in [docs/playbook.md](docs/playbook.md); read it before the next flagship.
+
 Follow the routes in the table. Each one gives showcase a reusable recipe: seeded web build (vibestep), store listing (better-youtube), replay with audio (podcaster). Declare each project's `demo.externals` first: podcaster's STT/TTS models and microphone are the hard ones (likely `replay`).
 
 ### M7. `/showcase` Claude skill
 
-A skill in `~/src/skills` for the parts that need taste: rewriting the README pitch, choosing a demo strategy, writing seed data. It runs `showcase check` before and after so the improvement is measured.
+A skill in `~/src/skills` for the parts that need taste: rewriting the README pitch, choosing a demo strategy, writing seed data. Build it on [docs/playbook.md](docs/playbook.md). It runs `showcase check` before and after so the improvement is measured.
 
 ## Later
 
 - LLM-judged README quality for C and B, beyond word counts.
-- `showcase capture` scaffolds: a VHS `.tape` for CLIs, a Playwright flow for web apps, ffmpeg to a looping WebP.
+- `showcase capture` scaffolds: a VHS `.tape` for CLIs, a browser flow for web apps, ffmpeg to a looping WebP. Start from vibestep's `scripts/capture-gameplay.mjs` (agent-browser stream frames with timestamps, verified takes, retries); see the playbook.
 - `showcase deploy` for the Vercel and subdomain step.
 - `collect --optimize`: resize and re-encode media with ffmpeg when it is on the PATH.

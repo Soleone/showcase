@@ -1,6 +1,6 @@
 # showcase
 
-Read PLAN.md first: it has the decisions, the flagship projects and the next milestone.
+Read PLAN.md first: it has the decisions, the flagship projects and the next milestone. Before taking a project up a tier, read docs/playbook.md: the lessons from logdig and vibestep.
 
 - No runtime dependencies. Node 22+, ESM, `node:` imports, tests with `node --test` (`npm test`).
 - The schema in `schema/showcase.schema.json` is the single source of truth; `src/schema.js` validates the subset of JSON Schema it uses. Extend the validator rather than duplicating rules.
