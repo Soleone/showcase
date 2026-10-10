@@ -75,6 +75,8 @@ portfolio site     shows the result                  ← reads feed.json through
 
 ### M6. The other flagships
 
+- vibestep (Oct 10): vibestep.vercel.app is live, but a new visitor lands in Play with no song and no beatmap. The R2 built-in song catalog (SHA-256 verified, session memory only) is built and empty; choosing the songs is vibestep task `eax`, waiting on the user's audition. Route: one cleared song through `song:intake`, a published map, first-visit auto-select into Play, then a gameplay loop for motion.
+
 Follow the routes in the table. Each one gives showcase a reusable recipe: seeded web build (vibestep), store listing (better-youtube), replay with audio (podcaster). Declare each project's `demo.externals` first: podcaster's STT/TTS models and microphone are the hard ones (likely `replay`).
 
 ### M7. `/showcase` Claude skill
