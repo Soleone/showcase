@@ -21,8 +21,17 @@ test("init takes demo and capture commands from package.json scripts", async () 
   assert.deepEqual(manifest.media, { capture: "pnpm run demo:capture" });
 });
 
+test("init takes the live demo from the first README link to an app host", async () => {
+  const manifest = await draft({
+    "README.md": "# Demo\n\nDemo plays songs.\n\nSee [the docs](https://demo.dev/docs) or ![shot](https://demo.github.io/shot.png).\n\nOpen **[demo.vercel.app](https://demo.vercel.app)** to try it.\n",
+    "package.json": { name: "demo", homepage: "https://demo.netlify.app" },
+  });
+  assert.equal(manifest.live, "https://demo.vercel.app");
+});
+
 test("init leaves media and demo out when there is nothing to prefill", async () => {
   const manifest = await draft({ "README.md": "# Demo\n\nJust text.\n", "package.json": { name: "demo", scripts: { start: "node ." } } });
   assert.equal(manifest.media, undefined);
   assert.equal(manifest.demo, undefined);
+  assert.equal(manifest.live, undefined);
 });

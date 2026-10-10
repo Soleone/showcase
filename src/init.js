@@ -38,6 +38,19 @@ async function draftMedia(project) {
   return { hero: media.hero, motion: media.motion, video: media.video };
 }
 
+// Hosts that only serve deployed apps. A custom domain could be docs or a blog, so it is set by hand.
+const appHosts = /(^|\.)(vercel\.app|netlify\.app|github\.io|pages\.dev|workers\.dev|web\.app|firebaseapp\.com|fly\.dev|onrender\.com|deno\.dev|surge\.sh|glitch\.me|replit\.app)$/i;
+
+// The first README link (or package.json homepage) to an app host is the live demo.
+async function draftLive(project) {
+  const base = project.readme ? path.dirname(project.readme.file) : project.root;
+  for (const href of [...(project.readme?.links ?? []).map((link) => link.href), project.pkg?.homepage]) {
+    if (typeof href !== "string" || !/^https?:\/\//i.test(href)) continue;
+    if (appHosts.test(new URL(href).hostname) && !(await mediaType(project, href, base))) return href;
+  }
+  return undefined;
+}
+
 const captureScripts = ["capture", "demo:capture", "media:capture"];
 const runners = ["npm", "pnpm", "yarn", "bun"];
 
@@ -62,6 +75,7 @@ export async function draftManifest(root) {
     kind: project.kind,
     year: await firstCommitYear(project.root) ?? undefined,
     repo: project.remote?.url,
+    live: await draftLive(project),
     media: Object.values(media).some(Boolean) || capture ? { ...media, capture } : undefined,
     demo: local ? { local } : undefined,
   };
