@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Builds a static page that boots a Node.js sandbox (WebContainers) in the browser and opens a shell in it.
 // Usage: node recipes/browser-terminal/build.js <recipe-dir> --out <dir> [--serve] [--port 4321]
-import { copyFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -57,16 +57,20 @@ async function build(recipeDir, out) {
   }
   await mkdir(out, { recursive: true });
   await copyFile(path.join(here, "index.html"), path.join(out, "index.html"));
+  await cp(path.join(here, "fonts"), path.join(out, "fonts"), { recursive: true, filter: (source) => !source.endsWith(".sh") });
   await writeFile(path.join(out, "files.json"), JSON.stringify(files));
   if (config.seed) await copyFile(path.join(recipeDir, config.seed), path.join(out, config.seed));
   await writeFile(path.join(out, "terminal.json"), `${JSON.stringify(config, null, 2)}\n`);
   await writeFile(path.join(out, "vercel.json"), `${JSON.stringify({
-    headers: [{ source: "/(.*)", headers: Object.entries(isolationHeaders).map(([key, value]) => ({ key, value })) }],
+    headers: [
+      { source: "/(.*)", headers: Object.entries(isolationHeaders).map(([key, value]) => ({ key, value })) },
+      { source: "/fonts/(.*)", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+    ],
   }, null, 2)}\n`);
   return { out, bytes: JSON.stringify(files).length };
 }
 
-const types = { ".html": "text/html; charset=utf-8", ".json": "application/json", ".js": "text/javascript" };
+const types = { ".html": "text/html; charset=utf-8", ".json": "application/json", ".js": "text/javascript", ".woff2": "font/woff2", ".txt": "text/plain" };
 
 function serve(out, port) {
   createServer(async (request, response) => {

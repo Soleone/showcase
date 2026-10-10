@@ -17,8 +17,7 @@
     }
   },
   "env": {
-    "PATH": "~/bin:/usr/local/bin:/usr/bin:/bin",
-    "LOGDIG_ICONS": "0"
+    "PATH": "~/bin:/usr/local/bin:/usr/bin:/bin"
   },
   "setup": [
     "chmod +x bin/logdig bin/pi"

@@ -10,10 +10,25 @@
   <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.11.0/+esm" crossorigin>
   <link rel="preload" href="files.json" as="fetch" crossorigin>
   <link rel="preload" href="terminal.json" as="fetch" crossorigin>
+  <link rel="preload" href="fonts/JetBrainsMonoNerdFontMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/JetBrainsMonoNerdFontMono-Bold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;600&display=swap" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/css/xterm.css" crossorigin>
   <style>
+    /* JetBrains Mono with Nerd Font icons (SIL OFL, fonts/OFL.txt), self-hosted; see fonts/build.sh. */
+    @font-face {
+      font-family: "JetBrainsMono Nerd Font Mono";
+      src: url("fonts/JetBrainsMonoNerdFontMono-Regular.woff2") format("woff2");
+      font-weight: 400;
+      font-display: block;
+    }
+    @font-face {
+      font-family: "JetBrainsMono Nerd Font Mono";
+      src: url("fonts/JetBrainsMonoNerdFontMono-Bold.woff2") format("woff2");
+      font-weight: 700;
+      font-display: block;
+    }
     /* Gilt (github.com/Soleone/omarchy-gilt-theme): sovereign gold on cool obsidian, dark first. */
     :root {
       color-scheme: dark;
@@ -68,7 +83,7 @@
     .hints { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     .hints span { color: var(--muted); font-size: 14px; margin-right: 4px; }
     .hints button {
-      font: 13px/1 "Geist Mono", ui-monospace, Menlo, Consolas, monospace;
+      font: 13px/1 "JetBrainsMono Nerd Font Mono", ui-monospace, Menlo, Consolas, monospace;
       background: var(--surface);
       color: var(--ink);
       border: 1px solid var(--line);
@@ -131,7 +146,12 @@
       import("https://cdn.jsdelivr.net/npm/@xterm/addon-webgl@0.19.0/+esm"),
       import("https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.11.0/+esm"),
     ]);
-    const fontLoad = Promise.race([document.fonts.load('14px "Geist Mono"'), new Promise((resolve) => setTimeout(resolve, 1200))]);
+    // Both weights before the terminal opens: xterm measures glyphs once and does not redraw when a font arrives.
+    const mono = '"JetBrainsMono Nerd Font Mono"';
+    const fontLoad = Promise.race([
+      Promise.all([document.fonts.load(`14px ${mono}`), document.fonts.load(`bold 14px ${mono}`)]),
+      new Promise((resolve) => setTimeout(resolve, 2500)),
+    ]);
 
     const config = await configLoad;
     const seedLoad = config.seed ? import(new URL(config.seed, location.href)) : null;
@@ -155,7 +175,7 @@
     const term = new Terminal({
       cursorBlink: true,
       convertEol: true,
-      fontFamily: '"Geist Mono", ui-monospace, Menlo, Consolas, monospace',
+      fontFamily: `${mono}, ui-monospace, Menlo, Consolas, monospace`,
       fontSize: 14,
       lineHeight: 1.25,
       scrollback: 5000,

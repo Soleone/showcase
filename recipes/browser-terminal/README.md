@@ -14,7 +14,9 @@ A recipe folder holds `terminal.json`:
 - `setup`: commands run before the shell opens, e.g. seeding sample data dated relative to today.
 - `welcome`, `hints` (buttons that type a command), `seed` (a browser module that adds files computed at visit time, such as dates relative to today), and overrides for `title`, `pitch`, `repo`, `disclosure`, `theme` (CSS variables) and `terminalTheme` (xterm colors; Gilt by default).
 
-The output is static: `index.html`, `files.json`, `terminal.json` and a `vercel.json` with the COOP/COEP headers the sandbox needs.
+The output is static: `index.html`, `files.json`, `terminal.json`, `fonts/` and a `vercel.json` with the COOP/COEP headers the sandbox needs.
+
+The terminal font is JetBrainsMono Nerd Font Mono, self-hosted as WOFF2 (about 600 KB per weight) so CLI icons render. `fonts/build.sh` rebuilds it from a pinned Nerd Fonts release, keeping the Basic Multilingual Plane and dropping the Material Design plane.
 
 Sandbox quirks found so far:
 
