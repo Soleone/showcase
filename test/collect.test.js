@@ -41,6 +41,8 @@ test("collect grades each project, copies local media and writes feed.json", asy
 test("collect rejects an invalid config", async () => {
   const root = await fixture({ "portfolio.config.json": { projects: [{ priority: "urgent" }] } });
   await assert.rejects(collect(path.join(root, "portfolio.config.json"), { out: root }), /id: required[\s\S]*priority: must be one of/);
+  const twice = await fixture({ "portfolio.config.json": { projects: [{ id: "a" }, { id: "a" }] } });
+  await assert.rejects(collect(path.join(twice, "portfolio.config.json"), { out: twice }), /duplicate id a/);
 });
 
 test("priority sets the target tier and a ceiling caps it", () => {

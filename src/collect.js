@@ -16,6 +16,8 @@ export async function loadPortfolio(file) {
     throw new Error(`Cannot read ${file}: ${error.message}`);
   }
   const errors = validate(data, portfolioSchema);
+  const ids = (Array.isArray(data?.projects) ? data.projects : []).map((project) => project?.id);
+  for (const id of new Set(ids.filter((id, index) => id && ids.indexOf(id) !== index))) errors.push(`projects: duplicate id ${id}`);
   if (errors.length) throw new Error(`${file} is invalid:\n${errors.map((error) => `  - ${error}`).join("\n")}`);
   return data;
 }

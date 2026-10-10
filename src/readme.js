@@ -18,6 +18,8 @@ const imagePattern = /!\[[^\]]*\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g;
 const linkPattern = /(?<!!)\[(?:[^[\]]|!\[[^\]]*\]\([^)]*\))*\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g;
 const htmlMediaPattern = /<(img|video|source)\b[^>]*?\bsrc\s*=\s*["']([^"']+)["']/gi;
 const htmlLinkPattern = /<a\b[^>]*?\bhref\s*=\s*["']([^"']+)["']/gi;
+// Status badges are images, but they show nothing about the project.
+const badgePattern = /^https?:\/\/(?:img\.shields\.io|shields\.io|badgen\.net|badge\.fury\.io|github\.com\/[^/]+\/[^/]+\/(?:actions\/)?workflows\/[^?#]+\/badge\.svg|[^/]*codecov\.io\/.+\/badge|coveralls\.io\/repos\/.+badge)/i;
 const bareAttachmentPattern = /^\s*(https:\/\/github\.com\/user-attachments\/assets\/[\w-]+)\s*$/;
 
 function plain(text) {
@@ -60,8 +62,8 @@ export function parseReadme(source) {
     if (markdownHeading) headings.push({ level: markdownHeading[1].length, text: plain(markdownHeading[2]).trim(), line: index });
     else if (htmlHeading) headings.push({ level: Number(htmlHeading[1]), text: plain(htmlHeading[2]).trim(), line: index });
 
-    for (const match of line.matchAll(imagePattern)) media.push({ src: match[1], line: index });
-    for (const match of line.matchAll(htmlMediaPattern)) media.push({ src: match[2], line: index, tag: match[1].toLowerCase() });
+    for (const match of line.matchAll(imagePattern)) if (!badgePattern.test(match[1])) media.push({ src: match[1], line: index });
+    for (const match of line.matchAll(htmlMediaPattern)) if (!badgePattern.test(match[2])) media.push({ src: match[2], line: index, tag: match[1].toLowerCase() });
     const attachment = line.match(bareAttachmentPattern);
     if (attachment) media.push({ src: attachment[1], line: index });
     for (const match of line.matchAll(linkPattern)) links.push({ href: match[1], line: index });

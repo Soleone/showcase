@@ -5,7 +5,7 @@ import { parseReadme } from "../src/readme.js";
 test("finds the title, lead, hero position and links", () => {
   const readme = parseReadme(`# Tool
 
-[![CI](https://img.shields.io/ci.svg)](https://ci.example.com)
+[![CI](https://img.shields.io/ci.svg)](https://ci.example.com) ![Build](https://github.com/me/tool/actions/workflows/ci.yml/badge.svg)
 
 A small tool that does one thing well.
 
@@ -17,8 +17,8 @@ See [the docs](docs/usage.md).
 `);
   assert.equal(readme.title, "Tool");
   assert.equal(readme.lead, "A small tool that does one thing well.");
-  assert.deepEqual(readme.media.map((item) => item.src), ["https://img.shields.io/ci.svg", "docs/hero.png"]);
-  assert.ok(readme.media[1].line < readme.firstSectionLine);
+  assert.deepEqual(readme.media.map((item) => item.src), ["docs/hero.png"], "badges are not media");
+  assert.ok(readme.media[0].line < readme.firstSectionLine);
   assert.deepEqual(readme.links.map((link) => link.href), ["https://ci.example.com", "docs/usage.md"]);
 });
 
