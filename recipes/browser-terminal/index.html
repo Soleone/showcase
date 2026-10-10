@@ -84,17 +84,14 @@
       min-height: 440px;
       display: flex;
       background: var(--terminal);
-      border: 1px solid var(--line);
       border-radius: 8px;
       padding: 14px 6px 6px 14px;
       overflow: hidden;
     }
     #terminal { flex: 1; min-width: 0; }
     #terminal .xterm, #terminal .xterm-viewport, #terminal .xterm-scrollable-element { background-color: var(--terminal) !important; }
-    /* Focus shows on the panel edge, not as a ring inside the terminal. */
+    /* No focus ring inside the terminal; the blinking cursor shows focus. */
     #terminal .xterm:focus, #terminal .xterm :focus { outline: none; }
-    .panel { transition: border-color 120ms; }
-    .panel:focus-within { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
     footer { padding-bottom: 24px; color: var(--muted); font-size: 13px; }
     @media (max-width: 600px) {
       header { padding-top: 20px; }
