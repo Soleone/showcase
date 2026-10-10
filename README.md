@@ -99,3 +99,5 @@ This writes `feed.json` with one entry per project: its showcase.json facts (or 
 ```sh
 npm test
 ```
+
+Releases are automated with release-please. Commit with Conventional Commits (`feat:`, `fix:`); merging the release PR it opens tags the version, writes `CHANGELOG.md` and publishes to npm through trusted publishing.

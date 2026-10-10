@@ -41,13 +41,14 @@ portfolio site     shows the result                  ← reads feed.json through
 - Done in showcase: `init` sorts what the README embeds or links into `hero` (first still above the first section), `motion` (first loop) and `video`, and takes `demo.local` / `media.capture` from the `demo` and `capture` / `demo:capture` / `media:capture` scripts, run with the `packageManager` from package.json.
 - `init` on logdig prefills hero, motion, video, capture and local, and the unedited draft grades A (checked on a copy).
 - No local-web-app detection: podcaster's deps (Vite + React web app, Fastify host) look like any full-stack web-app, and nothing generic marks "needs this machine". Set `kind` by hand.
-- Left: run `showcase init ~/src/products/logdig` in logdig itself and commit it there. Ask first; it is its own repo.
+- Done: logdig's `showcase.json` is committed in logdig (`e58c247`, not pushed).
 
 ### M2. Publish showcase
 
 - Done: `Soleone/showcase` is on GitHub and the `$schema` URL resolves.
 - `showcase` is taken on npm, so the package is `@soleone/showcase` (the command stays `showcase`).
-- Left: `npm publish --access public` (the user publishes).
+- Releases: release-please on `main` opens a release PR from Conventional Commits; merging it tags, writes `CHANGELOG.md` and publishes with npm trusted publishing (no token). Mirrors staffed.
+- Left: the first `npm publish` by hand (the user), then add the trusted publisher on npmjs.com (Soleone/showcase, `release.yml`).
 
 ### M3. Portfolio config and `showcase collect`
 
@@ -60,9 +61,10 @@ portfolio site     shows the result                  ← reads feed.json through
 
 ### M4. Wire the portfolio site
 
-- In progress (uncommitted in `~/src/js/portfolio`): `lib/showcase.ts` types the feed and `withShowcase()` enriches the curated list by repo URL (image from motion or hero, `live` → a "Try it" button) and appends feed projects that have a priority. `pnpm showcase` regenerates `public/showcase/`, which is committed so Vercel builds need no local checkouts.
+- Done and live on soleone.xyz (Oct 10): `lib/showcase.ts` types the feed and `withShowcase()` enriches the curated list by repo URL (image from motion or hero, `live` → a "Try it" button) and appends feed projects that have a priority. `pnpm showcase` regenerates `public/showcase/`, which is committed so Vercel builds need no local checkouts.
 - LogDig added to the site's curated list.
-- Left: real feed once logdig has `live`, commit, deploy. Ship TypeScript types for other sites later; `lib/showcase.ts` is the first draft.
+- The Vercel project is not connected to git: deploy with `vercel deploy --prod` after pushing.
+- Left: priorities in the review desk (all null as of Oct 10, so feed targets are empty). Ship TypeScript types for other sites later; `lib/showcase.ts` is the first draft.
 
 ### M5. DNS and the first S
 
