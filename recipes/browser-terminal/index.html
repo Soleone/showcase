@@ -29,7 +29,7 @@
       font-weight: 700;
       font-display: block;
     }
-    /* Gilt (github.com/Soleone/omarchy-gilt-theme): sovereign gold on cool obsidian, dark first. */
+    /* The default theme: gold on cool obsidian, dark first. A recipe can override any variable with theme. */
     :root {
       color-scheme: dark;
       --page: #0D0F12;
@@ -162,8 +162,8 @@
     if (config.disclosure) document.getElementById("disclosure").textContent = config.disclosure;
     for (const [name, value] of Object.entries(config.theme ?? {})) document.documentElement.style.setProperty(`--${name}`, value);
 
-    // Gilt's ANSI palette; a recipe can override any key with terminalTheme.
-    const gilt = {
+    // The default ANSI palette, to match the page; a recipe can override any key with terminalTheme.
+    const defaultTerminalTheme = {
       background: "#090A0C", foreground: "#D8D1C0", cursor: "#D4AF37", cursorAccent: "#090A0C",
       selectionBackground: "#342D1B", selectionForeground: "#F5EBD2",
       black: "#181B20", red: "#BC6060", green: "#7FA37A", yellow: "#D4AF37",
@@ -179,7 +179,7 @@
       fontSize: 14,
       lineHeight: 1.25,
       scrollback: 5000,
-      theme: { ...gilt, ...config.terminalTheme },
+      theme: { ...defaultTerminalTheme, ...config.terminalTheme },
     });
     const fit = new FitAddon();
     term.loadAddon(fit);

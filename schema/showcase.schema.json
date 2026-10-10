@@ -57,7 +57,7 @@
             "required": ["name", "type", "seam", "standIn"],
             "additionalProperties": false,
             "properties": {
-              "name": { "type": "string", "minLength": 1, "description": "What it is, e.g. \"LLM summaries via Pi\"." },
+              "name": { "type": "string", "minLength": 1, "description": "What it is, e.g. \"LLM summaries\"." },
               "type": { "enum": ["model", "service", "account", "hardware", "app", "data"] },
               "seam": { "type": "string", "minLength": 1, "description": "Where the stand-in plugs in without changing the project's code: a setting, env var, flag or injected client." },
               "standIn": {

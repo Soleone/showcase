@@ -24,7 +24,7 @@ async function tree(folder, include) {
   return result;
 }
 
-// Places a subtree at a path like "node_modules/logdig" inside the root tree.
+// Places a subtree at a path like "node_modules/my-cli" inside the root tree.
 function place(root, target, subtree) {
   const parts = target.split("/").filter((part) => part && part !== ".");
   let node = root;

@@ -1,3 +1,0 @@
-#!/usr/bin/env node
-// CommonJS on purpose: extensionless ES modules do not run in the sandbox.
-import("../.demo/pi.mjs");
