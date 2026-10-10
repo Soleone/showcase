@@ -21,7 +21,7 @@
           "^x-": {}
         },
         "properties": {
-          "id": { "type": "string", "minLength": 1, "description": "Stable identifier, e.g. local:products/logdig." },
+          "id": { "type": "string", "minLength": 1, "description": "Stable identifier, e.g. local:notecli." },
           "title": { "type": ["string", "null"], "description": "Fallback when the project has no showcase.json." },
           "priority": {
             "enum": ["high", "mid", "low", null],

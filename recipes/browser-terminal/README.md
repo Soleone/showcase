@@ -6,7 +6,7 @@ The S-tier route for a CLI: a static page that boots a Node.js sandbox ([WebCont
 node recipes/browser-terminal/build.js recipes/browser-terminal/logdig --out dist/logdig --serve
 ```
 
-A recipe folder holds `terminal.json`:
+`logdig/` is a worked example (it expects a logdig checkout at `~/src/products/logdig`). A recipe folder holds `terminal.json`:
 
 - `project`: the project folder. Title, pitch and repo come from its `showcase.json`, and the page's disclosure line is written from `demo.externals` (each stand-in's `note`).
 - `mount`: target path in the sandbox → `{ from, include }`. `from` may use `~` and `$VARS`; `include` limits the top-level entries copied.
@@ -23,6 +23,6 @@ Sandbox quirks found so far:
 - Mounted files are not executable; `chmod` them from a setup script (one process is faster than several setup commands).
 - Extensionless ES modules exit silently, so command shims are CommonJS that `import()` the real entry point.
 - A top-level `for await` fails to parse; read streams with events.
-- Model calls: point the project at a stand-in (logdig's `piCommand`) that returns canned output, so nothing leaves the browser.
+- Model calls: point the project at a stand-in (a setting that names the model command) that returns canned output, so nothing leaves the browser.
 
 WebContainers is free for personal and open-source use; check the StackBlitz license before using it commercially.
