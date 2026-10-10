@@ -1,8 +1,6 @@
 {
-  "title": "LogDig",
+  "project": "~/src/products/logdig",
   "pitch": "Your Pi history. A journal you can read. This is the real CLI, running in your browser on ten sample sessions.",
-  "repo": "https://github.com/Soleone/logdig",
-  "disclosure": "The real LogDig CLI runs in a WebContainers Node.js sandbox in your browser. Sessions are synthetic and a stand-in for Pi returns canned summaries, so nothing is sent to a model. Reload to start over.",
   "mount": {
     "node_modules/logdig": {
       "from": "~/src/products/logdig",

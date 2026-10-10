@@ -56,9 +56,18 @@ The project's facts for any portfolio to use. How much a portfolio cares about t
     "video": "docs/launch/assets/demo.mp4",
     "capture": "npm run demo:capture"
   },
-  "demo": { "strategy": "browser-terminal", "local": "npm run demo" }
+  "demo": {
+    "strategy": "browser-terminal",
+    "local": "npm run demo",
+    "externals": [
+      { "name": "LLM summaries via Pi", "type": "model", "seam": "piCommand setting", "standIn": "canned",
+        "note": "A stand-in for Pi returns canned summaries, so nothing is sent to a model." }
+    ]
+  }
 }
 ```
+
+`demo.externals` makes explicit what the project needs that a demo cannot reach (a model, an account, hardware, a service, another app), where a stand-in plugs in without changing the code (`seam`), and which stand-in the demo uses: `canned`, `replay`, `simulated`, `bring-your-own`, `real` or `omitted`. `[]` says there are none. Demo pages use each `note` to tell visitors what is not real.
 
 The full contract is [schema/showcase.schema.json](schema/showcase.schema.json). Fields starting with `x-` are allowed for your own extensions.
 

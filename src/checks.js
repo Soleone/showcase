@@ -172,6 +172,19 @@ export const checks = [
     hint: () => "Add a single command that runs it with sample data, and set it as demo.local in showcase.json.",
   },
   {
+    id: "demo.externals",
+    tier: "A",
+    required: false,
+    label: "Externals have stand-ins",
+    run: (project) => {
+      const externals = manifestData(project)?.demo?.externals;
+      if (!externals) return fail("demo.externals not set");
+      if (!externals.length) return pass("none");
+      return pass(externals.map((external) => `${external.name}: ${external.standIn}`).join(", "));
+    },
+    hint: () => "List what a demo cannot reach (models, accounts, hardware, services) in demo.externals, each with its seam and stand-in, or set it to [] if there is nothing.",
+  },
+  {
     id: "media.capture",
     tier: "A",
     required: false,

@@ -7,6 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { resolvePath } from "../../src/collect.js";
+import { loadManifest } from "../../src/project.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skip = new Set([".git", "node_modules"]);
@@ -36,8 +37,20 @@ function place(root, target, subtree) {
 
 const isolationHeaders = { "Cross-Origin-Embedder-Policy": "require-corp", "Cross-Origin-Opener-Policy": "same-origin" };
 
+// The page says what is not real, from the project's demo.externals.
+function disclosure(title, externals = []) {
+  const notes = externals.filter((external) => external.standIn !== "real").map((external) => external.note ?? `${external.name}: ${external.standIn} stand-in.`);
+  return [`The real ${title} runs in a Node.js sandbox in your browser (WebContainers).`, ...notes, "Reload to start over."].join(" ");
+}
+
 async function build(recipeDir, out) {
-  const { mount, ...config } = JSON.parse(await readFile(path.join(recipeDir, "terminal.json"), "utf8"));
+  const { mount, project, ...recipe } = JSON.parse(await readFile(path.join(recipeDir, "terminal.json"), "utf8"));
+  // Facts come from the project's showcase.json; terminal.json only adds what is specific to this page.
+  const manifest = project ? await loadManifest(resolvePath(project, recipeDir)) : null;
+  if (manifest?.errors.length) throw new Error(`${manifest.file}: ${manifest.errors.join("; ")}`);
+  const facts = manifest?.data ?? {};
+  const config = { title: facts.title, pitch: facts.pitch, repo: facts.repo, ...recipe };
+  config.disclosure ??= disclosure(config.title, facts.demo?.externals);
   const files = {};
   for (const [target, { from, include }] of Object.entries(mount)) {
     place(files, target, await tree(resolvePath(from, recipeDir), include));

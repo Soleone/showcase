@@ -66,13 +66,14 @@ portfolio site     shows the result                  ← reads feed.json through
 
 ### M5. DNS and the first S
 
-- Done locally: `recipes/browser-terminal/` builds a static page that boots WebContainers and runs the real logdig CLI on ten seeded sessions, with a stand-in for Pi returning canned summaries. Verified in headless Chromium: status, dry run, a four-way parallel backfill, the daily note, doctor.
-- Left: Vercel login, deploy it as its own project, set `live` in logdig's showcase.json.
-- Then the user adds the wildcard CNAME at Namecheap and `logdig.soleone.xyz` is aliased to it.
+- Done: logdig is S. https://logdig-demo.vercel.app runs the real CLI in a WebContainers sandbox (`recipes/browser-terminal/`, Gilt theme, WebGL, about 1 s to a ready shell when cached, about 3 s on a first visit while the runtime downloads).
+- `demo.externals` in showcase.json declares what a demo cannot reach and its stand-in; the page's disclosure is written from it.
+- Left: the user adds the wildcard CNAME at Namecheap, then alias `logdig.soleone.xyz` to the `logdig-demo` project.
+- Later: move logdig's seed and Pi stand-in into the logdig repo (`demo/browser/`), so the project owns its fakes; showcase keeps the generic page and builder.
 
 ### M6. The other flagships
 
-Follow the routes in the table. Each one gives showcase a reusable recipe: seeded web build (vibestep), store listing (better-youtube), replay with audio (podcaster).
+Follow the routes in the table. Each one gives showcase a reusable recipe: seeded web build (vibestep), store listing (better-youtube), replay with audio (podcaster). Declare each project's `demo.externals` first: podcaster's STT/TTS models and microphone are the hard ones (likely `replay`).
 
 ### M7. `/showcase` Claude skill
 

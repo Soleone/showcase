@@ -48,7 +48,26 @@
         "strategy": {
           "enum": ["hosted", "browser-terminal", "store-listing", "playground", "replay", "download", "none"]
         },
-        "local": { "type": "string", "minLength": 1, "description": "One command that runs a seeded demo locally." }
+        "local": { "type": "string", "minLength": 1, "description": "One command that runs a seeded demo locally." },
+        "externals": {
+          "type": "array",
+          "description": "What the project needs that a demo cannot reach (models, accounts, hardware, services, other apps), and the stand-in the demo uses instead. An empty list says there are none.",
+          "items": {
+            "type": "object",
+            "required": ["name", "type", "seam", "standIn"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string", "minLength": 1, "description": "What it is, e.g. \"LLM summaries via Pi\"." },
+              "type": { "enum": ["model", "service", "account", "hardware", "app", "data"] },
+              "seam": { "type": "string", "minLength": 1, "description": "Where the stand-in plugs in without changing the project's code: a setting, env var, flag or injected client." },
+              "standIn": {
+                "enum": ["canned", "replay", "simulated", "bring-your-own", "real", "omitted"],
+                "description": "canned: fixed responses keyed by input. replay: recorded real responses. simulated: a fake implementation. bring-your-own: the visitor supplies a key or account. real: the demo uses the real thing. omitted: the feature is off in the demo."
+              },
+              "note": { "type": "string", "minLength": 1, "description": "One sentence for visitors, e.g. \"Summaries are canned; nothing is sent to a model.\"" }
+            }
+          }
+        }
       }
     },
     "ceiling": {

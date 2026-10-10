@@ -26,7 +26,7 @@ test("a plain README that explains how to run it is C", async () => {
 test("a polished README is B, and A needs the manifest and a local demo", async () => {
   const report = await grade(polishedFiles);
   assert.equal(report.tier, "B");
-  assert.deepEqual(report.nextSteps.map((step) => step.id), ["manifest", "media.motion", "demo.local", "media.capture"]);
+  assert.deepEqual(report.nextSteps.map((step) => step.id), ["manifest", "media.motion", "demo.local", "demo.externals", "media.capture"]);
 });
 
 test("a valid manifest with motion and a local demo is A, without the advisory capture", async () => {

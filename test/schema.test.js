@@ -31,3 +31,13 @@ test("supports nullable types for the portfolio config", async () => {
   assert.deepEqual(validate({ projects: [{ id: "a", title: null, path: null, repo: null, priority: null }] }, portfolioSchema), []);
   assert.deepEqual(validate({ projects: [{ id: "a", path: 3 }] }, portfolioSchema), ["projects[0].path: expected string or null"]);
 });
+
+test("demo.externals needs a seam and a stand-in for each external", () => {
+  const manifest = (externals) => ({ title: "Demo", pitch: "Does a thing.", kind: "cli", demo: { externals } });
+  assert.deepEqual(validate(manifest([{ name: "LLM", type: "model", seam: "piCommand", standIn: "canned" }])), []);
+  assert.deepEqual(validate(manifest([])), []);
+  assert.deepEqual(validate(manifest([{ name: "LLM", type: "model", standIn: "magic" }])).sort(), [
+    "demo.externals[0].seam: required",
+    "demo.externals[0].standIn: must be one of canned, replay, simulated, bring-your-own, real, omitted",
+  ]);
+});
