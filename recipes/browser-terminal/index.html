@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Try it in your browser</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/css/xterm.css">
+  <style>
+    :root {
+      --page: #d7efdf;
+      --ink: #172f30;
+      --muted: #506564;
+      --accent: #24654b;
+      --terminal: #152b2b;
+      --terminal-ink: #e4efe8;
+      --chip: #fafbf7;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      background: var(--page);
+      color: var(--ink);
+      font: 16px/1.5 Lato, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header, main, footer { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+    header { padding-top: 32px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+    h1 { margin: 0; font-size: clamp(28px, 5vw, 44px); line-height: 1.05; letter-spacing: -0.03em; }
+    .pitch { margin: 8px 0 0; color: var(--muted); font-size: 18px; max-width: 60ch; }
+    a { color: var(--accent); }
+    .repo { font-size: 15px; white-space: nowrap; }
+    main { flex: 1; display: flex; flex-direction: column; gap: 12px; padding-top: 24px; padding-bottom: 16px; }
+    .hints { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .hints span { color: var(--muted); font-size: 14px; margin-right: 4px; }
+    .hints button {
+      font: 13px/1 "DejaVu Sans Mono", ui-monospace, Menlo, Consolas, monospace;
+      background: var(--chip);
+      color: var(--ink);
+      border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
+      border-radius: 4px;
+      padding: 7px 10px;
+      cursor: pointer;
+    }
+    .hints button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .hints button:disabled { opacity: 0.5; cursor: wait; }
+    .terminal {
+      flex: 1;
+      min-height: 420px;
+      display: flex;
+      background: var(--terminal);
+      border-radius: 6px;
+      padding: 12px;
+      overflow: hidden;
+    }
+    #terminal { flex: 1; min-width: 0; }
+    #terminal .xterm, #terminal .xterm-viewport, #terminal .xterm-scrollable-element { background-color: var(--terminal) !important; }
+    footer { padding-bottom: 24px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 600px) {
+      header { padding-top: 20px; }
+      .pitch { font-size: 16px; }
+      .terminal { min-height: 360px; padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1 id="title">Loading…</h1>
+      <p class="pitch" id="pitch"></p>
+    </div>
+    <a class="repo" id="repo" hidden>Source on GitHub</a>
+  </header>
+  <main>
+    <div class="hints" id="hints"><span>Try</span></div>
+    <div class="terminal"><div id="terminal"></div></div>
+  </main>
+  <footer id="disclosure">Runs entirely in your browser in a WebContainers Node.js sandbox.</footer>
+
+  <script type="module">
+    import { WebContainer } from "https://cdn.jsdelivr.net/npm/@webcontainer/api@1.6.4/+esm";
+    import { Terminal } from "https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/+esm";
+    import { FitAddon } from "https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.11.0/+esm";
+
+    const config = await (await fetch("terminal.json")).json();
+    document.title = `${config.title}: try it in your browser`;
+    document.getElementById("title").textContent = config.title;
+    document.getElementById("pitch").textContent = config.pitch ?? "";
+    if (config.repo) Object.assign(document.getElementById("repo"), { href: config.repo, hidden: false });
+    if (config.disclosure) document.getElementById("disclosure").textContent = config.disclosure;
+    for (const [name, value] of Object.entries(config.theme ?? {})) document.documentElement.style.setProperty(`--${name}`, value);
+
+    const styles = getComputedStyle(document.documentElement);
+    const term = new Terminal({
+      cursorBlink: true,
+      convertEol: true,
+      fontFamily: '"DejaVu Sans Mono", ui-monospace, Menlo, Consolas, monospace',
+      fontSize: 14,
+      lineHeight: 1.2,
+      theme: { background: styles.getPropertyValue("--terminal").trim(), foreground: styles.getPropertyValue("--terminal-ink").trim() },
+    });
+    const fit = new FitAddon();
+    term.loadAddon(fit);
+    term.open(document.getElementById("terminal"));
+    fit.fit();
+    // For automated checks: the visible terminal text.
+    window.terminalText = () => {
+      const buffer = term.buffer.active;
+      return Array.from({ length: buffer.length }, (_, row) => buffer.getLine(row)?.translateToString(true) ?? "").join("\n");
+    };
+
+    const dim = (text) => `\x1b[2m${text}\x1b[0m`;
+    const red = (text) => `\x1b[31m${text}\x1b[0m`;
+    let input;
+    const hints = document.getElementById("hints");
+    for (const hint of config.hints ?? []) {
+      const button = Object.assign(document.createElement("button"), { textContent: hint, disabled: true, title: `Run ${hint}` });
+      button.addEventListener("click", () => {
+        input?.write(`${hint}\r`);
+        term.focus();
+      });
+      hints.append(button);
+    }
+
+    async function run(container, command, env) {
+      const [name, ...args] = command.split(" ");
+      const child = await container.spawn(name, args, { env });
+      let output = "";
+      child.output.pipeTo(new WritableStream({ write(data) { output += data; } }));
+      const code = await child.exit;
+      if (code !== 0) throw new Error(`'${command}' exited with ${code}\n${output}`);
+      return output;
+    }
+
+    try {
+      if (!crossOriginIsolated) throw new Error("This page needs cross-origin isolation (COOP/COEP headers) to run the sandbox.");
+      term.write(dim("Booting a Node.js sandbox in your browser…\n"));
+      const [container, files] = await Promise.all([
+        WebContainer.boot({ workdirName: config.workdir ?? "demo" }),
+        fetch("files.json").then((response) => response.json()),
+      ]);
+      await container.mount(files);
+      const home = container.workdir;
+      const basePath = await run(container, "node -e process.stdout.write(process.env.PATH||'')", {});
+      // Env values may use ~ for the sandbox home and $PATH for the default PATH.
+      const expand = (value) => value.replace(/(^|:)~(?=\/|:|$)/g, `$1${home}`).replace("$PATH", basePath);
+      const env = { HOME: home, PATH: basePath, ...Object.fromEntries(Object.entries(config.env ?? {}).map(([key, value]) => [key, expand(value)])) };
+      for (const command of config.setup ?? []) await run(container, command, env);
+
+      term.reset();
+      term.write(`${(config.welcome ?? []).join("\n")}\n\n`);
+      const shell = await container.spawn("jsh", { env, terminal: { cols: term.cols, rows: term.rows } });
+      // Buttons wait for the first prompt, so a click never types ahead of the shell.
+      let prompted = false;
+      shell.output.pipeTo(new WritableStream({
+        write(data) {
+          term.write(data);
+          if (prompted) return;
+          prompted = true;
+          for (const button of hints.querySelectorAll("button")) button.disabled = false;
+          window.demoReady = true;
+        },
+      }));
+      input = shell.input.getWriter();
+      term.onData((data) => input.write(data));
+      new ResizeObserver(() => {
+        fit.fit();
+        shell.resize({ cols: term.cols, rows: term.rows });
+      }).observe(document.querySelector(".terminal"));
+      term.focus();
+    } catch (error) {
+      term.write(red(`\n${error.message}\n`));
+      if (/SharedArrayBuffer|isolation|WebContainer/i.test(error.message)) {
+        term.write(dim("Try a recent Chrome, Edge or Firefox on a desktop. Safari support is partial.\n"));
+      }
+      window.demoError = error.message;
+    }
+  </script>
+</body>
+</html>
