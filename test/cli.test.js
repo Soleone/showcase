@@ -1,0 +1,64 @@
+import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import test from "node:test";
+import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
+import { fixture, polishedFiles } from "./helpers.js";
+
+const bin = fileURLToPath(new URL("../bin/showcase.js", import.meta.url));
+const run = (...args) => promisify(execFile)(process.execPath, [bin, ...args], { env: { ...process.env, NO_COLOR: "1" } })
+  .catch((error) => error);
+
+test("check --json reports each project", async () => {
+  const [polished, empty] = await Promise.all([fixture(polishedFiles), fixture({})]);
+  const { stdout } = await run("check", polished, empty, "--json", "--offline");
+  assert.deepEqual(JSON.parse(stdout).map((report) => report.tier), ["B", "D"]);
+});
+
+test("check prints a summary for several projects and details for one", async () => {
+  const [polished, empty] = await Promise.all([fixture(polishedFiles), fixture({})]);
+  const summary = await run("check", polished, empty, "--offline");
+  assert.match(summary.stdout, /^TIER\s+PROJECT/);
+  assert.match(summary.stdout, /\nD\s+showcase-test-\S+\s+other\s+C needs readme, readme.substance, readme.usage/);
+  const single = await run("check", polished, "--offline");
+  assert.match(single.stdout, /To reach A:/);
+});
+
+test("check --min fails when a project is below the tier", async () => {
+  const root = await fixture(polishedFiles);
+  assert.equal((await run("check", root, "--offline", "--min", "B")).code, undefined);
+  assert.equal((await run("check", root, "--offline", "--min", "A")).code, 1);
+  assert.equal((await run("check", root, "--min", "Z")).code, 2);
+});
+
+test("init drafts showcase.json and refuses to overwrite it", async () => {
+  const root = await fixture(polishedFiles);
+  const first = await run("init", root);
+  assert.match(first.stdout, /Wrote/);
+  const written = JSON.parse(await readFile(path.join(root, "showcase.json"), "utf8"));
+  assert.deepEqual({ title: written.title, pitch: written.pitch, kind: written.kind, media: written.media }, {
+    title: "Demo",
+    pitch: "Demo turns a messy folder of notes into a tidy daily journal that you can actually read.",
+    kind: "cli",
+    media: { hero: "docs/hero.png" },
+  });
+  const second = await run("init", root);
+  assert.equal(second.code, 2);
+  assert.match(second.stderr, /already exists/);
+});
+
+test("unknown commands fail with a hint", async () => {
+  const result = await run("deploy");
+  assert.equal(result.code, 2);
+  assert.match(result.stderr, /Unknown command 'deploy'/);
+});
+
+test("init shortens a long lead to its first sentence", async () => {
+  const lead = `Demo is a tool. ${"It does many things for many people in many places. ".repeat(4)}`;
+  const root = await fixture({ "README.md": `# Demo\n\n${lead}\n` });
+  const { stdout } = await run("init", root, "--dry-run");
+  assert.match(stdout, /^Draft for /);
+  assert.equal(JSON.parse(stdout.slice(stdout.indexOf("{"))).pitch, "Demo is a tool.");
+});

@@ -1,0 +1,24 @@
+{
+  "name": "showcase",
+  "version": "0.1.0",
+  "description": "Grade how demoable a project is, from D to S, and get the next steps to raise it.",
+  "license": "MIT",
+  "author": "Soleone",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "showcase": "./bin/showcase.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "schema/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test"
+  }
+}

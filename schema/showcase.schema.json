@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Soleone/showcase/main/schema/showcase.schema.json",
+  "title": "showcase.json",
+  "description": "Facts about one project that a portfolio can show. Importance and ordering belong to the portfolio, not here.",
+  "type": "object",
+  "required": ["title", "pitch", "kind"],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^x-": {}
+  },
+  "properties": {
+    "$schema": { "type": "string" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 60 },
+    "pitch": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "description": "One sentence that makes someone want to click."
+    },
+    "kind": {
+      "enum": ["web-app", "local-web-app", "cli", "library", "browser-extension", "desktop-app", "agent-extension", "game", "service", "other"],
+      "description": "local-web-app: a browser UI backed by a process on the user's machine (local models, hardware, files), so it cannot be hosted as-is."
+    },
+    "year": { "type": "integer", "minimum": 1990, "maximum": 2100 },
+    "tech": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "repo": { "type": "string", "format": "uri" },
+    "live": {
+      "type": "string",
+      "format": "uri",
+      "description": "One click to try it for real: a hosted demo, browser terminal, store listing, playground or replay."
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hero": { "type": "string", "minLength": 1, "description": "Still image, path relative to the project root or a URL." },
+        "motion": { "type": "string", "minLength": 1, "description": "Short silent loop (animated WebP or GIF)." },
+        "video": { "type": "string", "minLength": 1, "description": "Longer video, may have sound (MP4 or WebM)." },
+        "screenshots": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "capture": { "type": "string", "minLength": 1, "description": "Command that regenerates the media from scratch." }
+      }
+    },
+    "demo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "enum": ["hosted", "browser-terminal", "store-listing", "playground", "replay", "download", "none"]
+        },
+        "local": { "type": "string", "minLength": 1, "description": "One command that runs a seeded demo locally." }
+      }
+    },
+    "ceiling": {
+      "enum": ["D", "C", "B", "A", "S"],
+      "description": "Highest tier this project can realistically reach, e.g. A when it cannot be hosted."
+    }
+  }
+}
