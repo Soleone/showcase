@@ -63,7 +63,7 @@ What stays in the project:
 - **Frame for the card, not the screen.** Portfolio cards often crop with `object-fit: cover` from the top at roughly 3:1. Crop to the band where the action is, which also makes it larger in the README.
 - **Loop seams:** start and end on a calm frame, and wait for dialogs to finish closing before the clip starts. Return `{ startAt }` from `drive` (the page's `Date.now()`) to trim the lead-in.
 
-CLIs: record a browser replay of a scripted session as the loop, and reach S with the in-browser terminal (`recipes/browser-terminal/`), which runs the real CLI with sample data and stand-ins for anything external.
+CLIs: record a browser replay of a scripted session as the loop, and reach S with the in-browser terminal (`showcase terminal`, see `recipes/browser-terminal/`), which runs the real CLI with sample data and stand-ins for anything external.
 
 ## Hosting and the portfolio
 

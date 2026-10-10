@@ -1,15 +1,12 @@
-#!/usr/bin/env node
-// Builds a static page that boots a Node.js sandbox (WebContainers) in the browser and opens a shell in it.
-// Usage: node recipes/browser-terminal/build.js <recipe-dir> --out <dir> [--serve] [--port 4321]
+// Builds the browser terminal recipe: a static page that boots a Node.js sandbox (WebContainers) and opens a shell in it.
 import { copyFile, cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseArgs } from "node:util";
-import { resolvePath } from "../../src/collect.js";
-import { loadManifest } from "../../src/project.js";
+import { resolvePath } from "./collect.js";
+import { loadManifest } from "./project.js";
 
-const here = path.dirname(fileURLToPath(import.meta.url));
+const assets = fileURLToPath(new URL("../recipes/browser-terminal/", import.meta.url));
 const skip = new Set([".git", "node_modules"]);
 
 // Reads a folder into a WebContainer FileSystemTree; `include` limits the top-level entries.
@@ -43,8 +40,14 @@ function disclosure(title, externals = []) {
   return [`The real ${title} runs in a Node.js sandbox in your browser (WebContainers).`, ...notes, "Reload to start over."].join(" ");
 }
 
-async function build(recipeDir, out) {
-  const { mount, project, ...recipe } = JSON.parse(await readFile(path.join(recipeDir, "terminal.json"), "utf8"));
+export async function buildTerminal(recipeDir, out) {
+  recipeDir = path.resolve(recipeDir);
+  out = path.resolve(out);
+  const recipeFile = path.join(recipeDir, "terminal.json");
+  const { mount, project, ...recipe } = JSON.parse(await readFile(recipeFile, "utf8").catch(() => {
+    throw new Error(`No terminal.json in ${recipeDir}. See recipes/browser-terminal/README.md.`);
+  }));
+  if (!mount) throw new Error(`${recipeFile}: mount is required`);
   // Facts come from the project's showcase.json; terminal.json only adds what is specific to this page.
   const manifest = project ? await loadManifest(resolvePath(project, recipeDir)) : null;
   if (manifest?.errors.length) throw new Error(`${manifest.file}: ${manifest.errors.join("; ")}`);
@@ -56,8 +59,8 @@ async function build(recipeDir, out) {
     place(files, target, await tree(resolvePath(from, recipeDir), include));
   }
   await mkdir(out, { recursive: true });
-  await copyFile(path.join(here, "index.html"), path.join(out, "index.html"));
-  await cp(path.join(here, "fonts"), path.join(out, "fonts"), { recursive: true, filter: (source) => !source.endsWith(".sh") });
+  await copyFile(path.join(assets, "index.html"), path.join(out, "index.html"));
+  await cp(path.join(assets, "fonts"), path.join(out, "fonts"), { recursive: true, filter: (source) => !source.endsWith(".sh") });
   await writeFile(path.join(out, "files.json"), JSON.stringify(files));
   if (config.seed) await copyFile(path.join(recipeDir, config.seed), path.join(out, config.seed));
   await writeFile(path.join(out, "terminal.json"), `${JSON.stringify(config, null, 2)}\n`);
@@ -72,25 +75,21 @@ async function build(recipeDir, out) {
 
 const types = { ".html": "text/html; charset=utf-8", ".json": "application/json", ".js": "text/javascript", ".woff2": "font/woff2", ".txt": "text/plain" };
 
-function serve(out, port) {
-  createServer(async (request, response) => {
-    const name = new URL(request.url, "http://localhost").pathname.replace(/\/$/, "/index.html");
-    const file = path.join(out, path.normalize(name));
-    if (!file.startsWith(out)) return response.writeHead(403).end();
-    try {
-      const body = await readFile(file);
-      response.writeHead(200, { "Content-Type": types[path.extname(file)] ?? "application/octet-stream", ...isolationHeaders }).end(body);
-    } catch {
-      response.writeHead(404).end("Not found");
-    }
-  }).listen(port, () => console.log(`Serving ${out} at http://localhost:${port}`));
+// Serves a built page on this machine only, with the headers the sandbox needs.
+export function serveTerminal(out, port = 4321) {
+  out = path.resolve(out);
+  return new Promise((resolve, reject) => {
+    const server = createServer(async (request, response) => {
+      const name = new URL(request.url, "http://localhost").pathname.replace(/\/$/, "/index.html");
+      const file = path.join(out, path.normalize(name));
+      if (!file.startsWith(out + path.sep)) return response.writeHead(403).end();
+      try {
+        const body = await readFile(file);
+        response.writeHead(200, { "Content-Type": types[path.extname(file)] ?? "application/octet-stream", ...isolationHeaders }).end(body);
+      } catch {
+        response.writeHead(404).end("Not found");
+      }
+    });
+    server.once("error", reject).listen(port, "127.0.0.1", () => resolve(server));
+  });
 }
-
-const { values, positionals } = parseArgs({ allowPositionals: true, options: { out: { type: "string" }, serve: { type: "boolean" }, port: { type: "string" } } });
-if (positionals.length !== 1 || !values.out) {
-  console.error("Usage: node recipes/browser-terminal/build.js <recipe-dir> --out <dir> [--serve] [--port 4321]");
-  process.exit(2);
-}
-const { out, bytes } = await build(path.resolve(positionals[0]), path.resolve(values.out));
-console.log(`Built ${out} (${Math.round(bytes / 1024)} KB of files)`);
-if (values.serve) serve(out, Number(values.port ?? 4321));

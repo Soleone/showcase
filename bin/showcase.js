@@ -7,6 +7,7 @@ import { init } from "../src/init.js";
 import { inspectMotion, runCapture } from "../src/inspect.js";
 import { loadProject } from "../src/project.js";
 import { formatInspection, formatMatrix, formatReport, formatSummary } from "../src/report.js";
+import { buildTerminal, serveTerminal } from "../src/terminal.js";
 
 const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 
@@ -19,13 +20,18 @@ Usage:
                              Grade every project in a portfolio.config.json and write
                              <dir>/feed.json plus copies of the local media
   showcase capture [path]    Re-record the media with media.capture, then check media.motion
+  showcase terminal [recipe] Build the in-browser terminal demo for a CLI from a folder
+                             with terminal.json (default demo/browser)
 
 Options:
   --json         Machine-readable output (check)
   --verbose, -v  List every check, not just the next steps (check)
   --matrix       Every check against every project, one column each (check)
   --offline      Do not request the live URL (check, collect)
-  --out <dir>    Where to write feed.json and media/ (collect)
+  --out <dir>    Where to write feed.json and media/ (collect), or the page
+                 (terminal, default dist/browser)
+  --serve        Serve the page on 127.0.0.1 after building it (terminal)
+  --port <n>     Port for --serve (default 4321)
   --min <tier>   Exit with status 1 if any project is below this tier (check)
   --force        Overwrite an existing showcase.json (init)
   --dry-run      Print the draft without writing it (init)
@@ -70,6 +76,17 @@ async function capture(paths, values) {
   if (results.some((result) => result.status === "fail")) process.exitCode = 1;
 }
 
+async function terminal(paths, values) {
+  if (paths.length > 1) throw new Error("terminal takes a single recipe folder");
+  const { out, bytes } = await buildTerminal(paths[0] ?? "demo/browser", values.out ?? "dist/browser");
+  console.log(`Built ${out} (${Math.round(bytes / 1024)} KB of files)`);
+  if (!values.serve) return;
+  const port = Number(values.port ?? 4321);
+  if (!Number.isInteger(port)) throw new Error("--port must be a number");
+  await serveTerminal(out, port);
+  console.log(`Serving at http://127.0.0.1:${port} (Ctrl-C to stop)`);
+}
+
 async function main() {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
@@ -83,6 +100,8 @@ async function main() {
       "dry-run": { type: "boolean" },
       "no-record": { type: "boolean" },
       out: { type: "string" },
+      serve: { type: "boolean" },
+      port: { type: "string" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean" },
     },
@@ -93,6 +112,7 @@ async function main() {
   if (values.help || !command) return console.log(usage);
   if (command === "check") return check(paths, values);
   if (command === "capture") return capture(paths, values);
+  if (command === "terminal") return terminal(paths, values);
   if (command === "init") {
     if (paths.length > 1) throw new Error("init takes a single path");
     const { file, manifest, errors } = await init(paths[0] ?? ".", { force: values.force, dryRun: values["dry-run"] });

@@ -30,7 +30,7 @@ portfolio site          shows the result                  ← reads feed.json th
 - **Publishing:** `@soleone/showcase` on GitHub (`showcase` is taken on npm; the command stays `showcase`). release-please on `main` opens a release PR from Conventional Commits; merging it tags, writes `CHANGELOG.md` and publishes with npm trusted publishing. Left: the first `npm publish` by hand, then the trusted publisher on npmjs.com.
 - **`collect <config> --out <dir>`** writes `feed.json`: portfolio fields, showcase.json facts (or the init draft, `source: "draft"`), `tier`, `target` and `gap`. Local media is copied to `media/<slug>/`; remote URLs stay. Priority sets the target (high S, mid A, low C, capped by `ceiling`). Projects without a local path are listed ungraded.
 - **`demo.externals`** declares what a demo cannot reach and its stand-in; demo pages write their disclosure from it.
-- **Browser terminal recipe** (`recipes/browser-terminal/`): the S route for a CLI, a static page that runs the real CLI in WebContainers. About 1 s to a ready shell when cached.
+- **`terminal`**: the S route for a CLI. Builds a static page from the project's `demo/browser/terminal.json` that runs the real CLI in WebContainers (assets in `recipes/browser-terminal/`, shipped in the package). About 1 s to a ready shell when cached.
 - **`capture`**: runs `media.capture`, then checks `media.motion` (animated, loops, width, length, size). `@soleone/showcase/capture` records a web app as a looping WebP from agent-browser's stream; the project supplies `start`, `drive` and `verify`.
 - **[docs/playbook.md](docs/playbook.md)**: what worked taking a CLI and a web app to S.
 

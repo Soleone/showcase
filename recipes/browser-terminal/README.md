@@ -3,10 +3,11 @@
 The S-tier route for a CLI: a static page that boots a Node.js sandbox ([WebContainers](https://webcontainers.io)) in the visitor's browser and opens a real shell, with the project's own code and sample data mounted.
 
 ```sh
-node recipes/browser-terminal/build.js ../my-cli/demo/browser --out dist/my-cli --serve
+showcase terminal --serve                       # builds demo/browser into dist/browser, serves it on 127.0.0.1:4321
+showcase terminal path/to/recipe --out dist/demo
 ```
 
-Keep the recipe folder in the project itself (for example `demo/browser/`), so the project owns its sample data and stand-ins. Relative paths in it resolve from the recipe folder. It holds `terminal.json`:
+Keep the recipe folder in the project itself (`demo/browser/` by default), so the project owns its sample data and stand-ins. Relative paths in it resolve from the recipe folder. It holds `terminal.json`:
 
 - `project`: the project folder. Title, pitch and repo come from its `showcase.json`, and the page's disclosure line is written from `demo.externals` (each stand-in's `note`).
 - `mount`: target path in the sandbox → `{ from, include }`. `from` may use `~` and `$VARS`; `include` limits the top-level entries copied.

@@ -20,6 +20,7 @@ showcase check ~/code/a ~/code/b --verbose
 showcase check ~/code/a ~/code/b --matrix   # every check against every project
 showcase init                 # draft showcase.json from the README and package.json
 showcase capture              # re-record the media with media.capture and check the loop
+showcase terminal --serve     # build the in-browser terminal demo for a CLI
 ```
 
 No dependencies; needs Node 22 or later.
@@ -112,6 +113,16 @@ await record({
 ```
 
 [docs/playbook.md](docs/playbook.md) has what to watch for when recording, and the rest of what it took to get projects to S.
+
+## Try a CLI in the browser
+
+For a CLI, S means a visitor can run it. `showcase terminal` builds a static page that runs your real CLI in a Node.js sandbox in the browser ([WebContainers](https://webcontainers.io)), with sample data and stand-ins for anything it cannot reach:
+
+```sh
+showcase terminal --serve   # builds demo/browser/terminal.json into dist/browser
+```
+
+Deploy `dist/browser` to any static host; it includes a `vercel.json` with the headers the sandbox needs. [recipes/browser-terminal](recipes/browser-terminal/README.md) explains `terminal.json` and the sandbox's quirks.
 
 ## Scripting
 
