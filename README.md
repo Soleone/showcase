@@ -6,14 +6,15 @@ Grade how demoable a project is, from D to S, and get the exact next steps to ra
 $ showcase check ~/src/products/*
 TIER  PROJECT         KIND               NEXT
 B     vibestep        desktop-app        A needs manifest, media.motion, demo.local
-B     logdig          cli                A needs manifest, demo.local
+A     LogDig          cli                S needs live
 C     podcaster       other              B needs readme.hero
 ```
 
 ## Quick start
 
 ```sh
-npm link                      # once, from this directory
+npx @soleone/showcase check   # grade the project in the current directory, no install
+npm i -g @soleone/showcase    # or install it to get the `showcase` command
 showcase check                # grade the project in the current directory
 showcase check ~/src/a ~/src/b --verbose
 showcase init                 # draft showcase.json from the README and package.json

@@ -1,9 +1,21 @@
 {
-  "name": "showcase",
+  "name": "@soleone/showcase",
   "version": "0.1.0",
   "description": "Grade how demoable a project is, from D to S, and get the next steps to raise it.",
   "license": "MIT",
   "author": "Soleone",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Soleone/showcase.git"
+  },
+  "homepage": "https://github.com/Soleone/showcase#readme",
+  "bugs": "https://github.com/Soleone/showcase/issues",
+  "keywords": [
+    "portfolio",
+    "readme",
+    "demo",
+    "cli"
+  ],
   "type": "module",
   "engines": {
     "node": ">=22"

@@ -28,7 +28,7 @@ portfolio site     shows the result                  ← reads feed.json through
 
 | Project | Path | Kind | Tier (Oct 9) | Target and route |
 |---|---|---|---|---|
-| logdig | `~/src/products/logdig` | cli | B | S. Already has animated WebP, MP4, hero PNG, `npm run demo`, `npm run demo:capture` (a browser replay). Fast S: host that replay. Real S: in-browser terminal. |
+| logdig | `~/src/products/logdig` | cli | A | S. Already has animated WebP, MP4, hero PNG, `npm run demo`, `npm run demo:capture` (a browser replay). Fast S: host that replay. Real S: in-browser terminal. |
 | vibestep | `~/src/products/vibestep` | desktop-app (has a web build) | B | S. Web build with a bundled CC0 song and a premade beatmap, landing in playtest. Needs a motion asset. |
 | better-youtube | `~/src/products/better-youtube` | browser-extension | C | S. Fix the pitch (currently "Adds buttons on YouTube pages:"), before/after clip, Chrome Web Store listing. |
 | podcaster | `~/src/products/podcaster` | local-web-app | C | A, maybe S as a replay with audio (MP4/WebM, WebP has no sound). Needs a hero visual first. |
@@ -45,8 +45,9 @@ portfolio site     shows the result                  ← reads feed.json through
 
 ### M2. Publish showcase
 
-- Create `Soleone/showcase` on GitHub so the `$schema` URL resolves.
-- Check the npm name; `showcase` is probably taken, so fall back to a scoped name.
+- Done: `Soleone/showcase` is on GitHub and the `$schema` URL resolves.
+- `showcase` is taken on npm, so the package is `@soleone/showcase` (the command stays `showcase`).
+- Left: `npm publish --access public` (the user publishes).
 
 ### M3. Portfolio config and `showcase collect`
 
