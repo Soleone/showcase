@@ -139,7 +139,7 @@
     const mark = (name) => { timings[name] = Math.round(performance.now() - started); };
     window.demoTimings = timings;
     const booting = crossOriginIsolated ? WebContainer.boot({ workdirName: "demo" }) : null;
-    const filesLoad = fetch("files.json").then((response) => response.json());
+    const filesLoad = fetch("files.json").then((response) => response.json()).then(decode);
     const configLoad = fetch("terminal.json").then((response) => response.json());
     const terminalCode = Promise.all([
       import("https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/+esm"),
@@ -212,6 +212,15 @@
         term.focus();
       });
       hints.append(button);
+    }
+
+    // Binary files arrive as base64 (see src/terminal.js).
+    function decode(tree) {
+      for (const node of Object.values(tree)) {
+        if (node.directory) decode(node.directory);
+        else if (node.file?.base64 !== undefined) node.file = { contents: Uint8Array.from(atob(node.file.base64), (char) => char.charCodeAt(0)) };
+      }
+      return tree;
     }
 
     function merge(tree, extra) {

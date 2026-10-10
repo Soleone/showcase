@@ -1,0 +1,5 @@
+{
+  "name": "old-library",
+  "version": "0.3.1",
+  "main": "src/index.js"
+}

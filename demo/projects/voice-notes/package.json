@@ -1,0 +1,5 @@
+{
+  "name": "voice-notes-ui",
+  "private": true,
+  "devDependencies": { "vite": "^7.0.0" }
+}

@@ -9,6 +9,17 @@ import { loadManifest } from "./project.js";
 const assets = fileURLToPath(new URL("../recipes/browser-terminal/", import.meta.url));
 const skip = new Set([".git", "node_modules"]);
 
+const utf8 = new TextDecoder("utf-8", { fatal: true });
+
+// Text stays readable in files.json; anything else (images, loops) travels as base64 and the page decodes it.
+function fileNode(buffer) {
+  try {
+    return { file: { contents: utf8.decode(buffer) } };
+  } catch {
+    return { file: { base64: buffer.toString("base64") } };
+  }
+}
+
 // Reads a folder into a WebContainer FileSystemTree; `include` limits the top-level entries.
 async function tree(folder, include) {
   const result = {};
@@ -16,7 +27,7 @@ async function tree(folder, include) {
     if (include ? !include.includes(entry.name) : skip.has(entry.name)) continue;
     const file = path.join(folder, entry.name);
     if (entry.isDirectory()) result[entry.name] = { directory: await tree(file) };
-    else if (entry.isFile()) result[entry.name] = { file: { contents: await readFile(file, "utf8") } };
+    else if (entry.isFile()) result[entry.name] = fileNode(await readFile(file));
   }
   return result;
 }

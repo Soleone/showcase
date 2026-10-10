@@ -10,7 +10,7 @@ showcase terminal path/to/recipe --out dist/demo
 Keep the recipe folder in the project itself (`demo/browser/` by default), so the project owns its sample data and stand-ins. Relative paths in it resolve from the recipe folder. It holds `terminal.json`:
 
 - `project`: the project folder. Title, pitch and repo come from its `showcase.json`, and the page's disclosure line is written from `demo.externals` (each stand-in's `note`).
-- `mount`: target path in the sandbox → `{ from, include }`. `from` may use `~` and `$VARS`; `include` limits the top-level entries copied.
+- `mount`: target path in the sandbox → `{ from, include }`. `from` may use `~` and `$VARS`; `include` limits the top-level entries copied. Binary files (images, loops) are mounted too.
 - `env`: values may use `~` (the sandbox home, always `/home/demo`) and `$PATH` (costs one extra process at boot; write the PATH out instead).
 - `setup`: commands run before the shell opens, e.g. seeding sample data dated relative to today.
 - `welcome`, `hints` (buttons that type a command), `seed` (a browser module that adds files computed at visit time, such as dates relative to today), and overrides for `title`, `pitch`, `repo`, `disclosure`, `theme` (CSS variables) and `terminalTheme` (xterm colors; gold on dark by default).

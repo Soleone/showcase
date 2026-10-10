@@ -1,0 +1,9 @@
+{
+  "title": "beatbox",
+  "pitch": "Tap out a rhythm and turn it into a loop you can layer and share.",
+  "kind": "web-app",
+  "year": 2026,
+  "tech": ["TypeScript", "Web Audio"],
+  "media": { "motion": "docs/loop.webp" },
+  "demo": { "local": "npm run dev", "externals": [] }
+}

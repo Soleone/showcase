@@ -2,13 +2,7 @@
 
 Grade how demoable a project is, from D to S, and get the exact next steps to raise it.
 
-```
-$ showcase check ~/code/*
-TIER  PROJECT         KIND               NEXT
-B     beatbox         web-app            A needs manifest, media.motion, demo.local
-A     notecli         cli                S needs live
-C     voice-notes     local-web-app      B needs readme.hero
-```
+![showcase grading four sample projects in its browser demo](docs/media/demo.webp)
 
 ## Quick start
 
@@ -122,7 +116,7 @@ For a CLI, S means a visitor can run it. `showcase terminal` builds a static pag
 showcase terminal --serve   # builds demo/browser/terminal.json into dist/browser
 ```
 
-Deploy `dist/browser` to any static host; it includes a `vercel.json` with the headers the sandbox needs. [recipes/browser-terminal](recipes/browser-terminal/README.md) explains `terminal.json` and the sandbox's quirks.
+Deploy `dist/browser` to any static host; it includes a `vercel.json` with the headers the sandbox needs. [recipes/browser-terminal](recipes/browser-terminal/README.md) explains `terminal.json` and the sandbox's quirks, and showcase's own demo in [demo/browser](demo/browser/terminal.json) is a working example.
 
 ## Scripting
 
@@ -132,6 +126,9 @@ Deploy `dist/browser` to any static host; it includes a `vercel.json` with the h
 
 ```sh
 npm test
+npm run demo            # grade the sample projects in demo/projects
+npm run demo:browser    # the same in the browser terminal, on 127.0.0.1:4321
+npm run media:capture   # re-record docs/media from the browser demo
 ```
 
 Releases are automated with release-please. Commit with Conventional Commits (`feat:`, `fix:`); merging the release PR it opens tags the version, writes `CHANGELOG.md` and publishes to npm through trusted publishing.

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Soleone/showcase/main/schema/showcase.schema.json",
+  "title": "showcase",
+  "pitch": "Grade how demoable a project is, from D to S, and get the exact next steps to raise it.",
+  "kind": "cli",
+  "year": 2026,
+  "tech": ["Node.js"],
+  "repo": "https://github.com/Soleone/showcase",
+  "media": {
+    "hero": "docs/media/hero.png",
+    "motion": "docs/media/demo.webp",
+    "capture": "npm run media:capture"
+  },
+  "demo": {
+    "strategy": "browser-terminal",
+    "local": "npm run demo",
+    "externals": []
+  }
+}

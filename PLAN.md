@@ -33,6 +33,7 @@ portfolio site          shows the result                  ← reads feed.json th
 - **`terminal`**: the S route for a CLI. Builds a static page from the project's `demo/browser/terminal.json` that runs the real CLI in WebContainers (assets in `recipes/browser-terminal/`, shipped in the package). About 1 s to a ready shell when cached.
 - **`capture`**: runs `media.capture`, then checks `media.motion` (animated, loops, width, length, size). `@soleone/showcase/capture` records a web app as a looping WebP from agent-browser's stream; the project supplies `start`, `drive` and `verify`.
 - **[docs/playbook.md](docs/playbook.md)**: what worked taking a CLI and a web app to S.
+- **showcase shows itself (A).** Four sample projects in `demo/projects`, one per tier from D to A (`npm run demo`), a browser terminal demo of the CLI in `demo/browser`, and `npm run media:capture`, which records that demo with `@soleone/showcase/capture` into `docs/media`. S is hosting `demo/browser` and setting `live`.
 
 ## Next
 

@@ -54,20 +54,28 @@ async function streamFrames(url) {
   return { frames, stop: () => socket.close() };
 }
 
+// The stream only sends a frame when the screen changes, so a clip opens on the last frame painted before it.
+export function clipFrames(frames, { startAt, endAt }) {
+  const opening = frames.findLast((frame) => frame.at < startAt);
+  return [...(opening ? [{ ...opening, at: startAt }] : []), ...frames.filter((frame) => frame.at >= startAt && frame.at <= endAt)];
+}
+
 const frameName = (index) => `frame-${String(index).padStart(5, "0")}.jpg`;
 
-async function encode(frames, endAt, work, { out, crop, width, fps, quality, grid }) {
+export async function encode(frames, endAt, work, { out, crop, width, fps, quality, grid }) {
   const list = [];
   for (const [index, frame] of frames.entries()) {
     await writeFile(path.join(work, frameName(index)), Buffer.from(frame.data, "base64"));
     list.push(`file '${frameName(index)}'`, `duration ${((frames[index + 1]?.at ?? endAt) - frame.at) / 1000}`);
   }
-  // The concat demuxer drops the last duration unless the last file is listed again.
+  // The concat demuxer drops the last duration unless the last file is listed again, and then the fps filter
+  // stretches the end unpredictably, so the output is also cut to the take's length.
   await writeFile(path.join(work, "frames.txt"), `${list.join("\n")}\nfile '${frameName(frames.length - 1)}'\n`);
+  const seconds = String((endAt - frames[0].at) / 1000);
   const filters = (scale) => [crop && `crop=${crop}`, `scale=${scale}:-2:flags=lanczos`].filter(Boolean).join(",");
   await mkdir(path.dirname(out), { recursive: true });
   await exec("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", path.join(work, "frames.txt"),
-    "-vf", `fps=${fps},${filters(width)}`, "-c:v", "libwebp_anim", "-quality", String(quality), "-compression_level", "6", "-loop", "0", "-an", out], { timeout: 600_000 });
+    "-vf", `fps=${fps},${filters(width)}`, "-t", seconds, "-c:v", "libwebp_anim", "-quality", String(quality), "-compression_level", "6", "-loop", "0", "-an", out], { timeout: 600_000 });
   if (!grid) return;
   // Twelve frames spread over the take, to look at before committing.
   const picks = Array.from({ length: 12 }, (_, index) => frameName(Math.round((index * (frames.length - 1)) / 11)));
@@ -137,7 +145,7 @@ export async function record(options) {
         log(`Take ${attempt} rejected: ${rejected}. Trying again.`);
         continue;
       }
-      const frames = stream.frames.filter((frame) => frame.at >= window.startAt && frame.at <= window.endAt);
+      const frames = clipFrames(stream.frames, window);
       if (frames.length < 2) throw new Error("The stream sent fewer than two frames during the take");
       await encode(frames, window.endAt, work, settings);
       return { out: settings.out, grid: settings.grid, frames: frames.length, durationMs: window.endAt - window.startAt, attempt };

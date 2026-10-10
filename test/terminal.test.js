@@ -27,6 +27,7 @@ const recipeFiles = {
   },
   "demo/browser/home/.demo/sessions.json": "[]\n",
   "demo/browser/seed.js": "export default () => ({})\n",
+  "demo/browser/home/loop.webp": Buffer.from([0x52, 0x49, 0x46, 0x46, 0xff, 0x00, 0x80]),
 };
 
 const json = async (file) => JSON.parse(await readFile(file, "utf8"));
@@ -49,6 +50,7 @@ test("buildTerminal mounts the project and takes its facts from showcase.json", 
   const files = await json(path.join(out, "files.json"));
   assert.deepEqual(Object.keys(files.node_modules.directory.demo.directory).sort(), ["bin", "src"]);
   assert.equal(files[".demo"].directory["sessions.json"].file.contents, "[]\n");
+  assert.deepEqual(files["loop.webp"].file, { base64: Buffer.from([0x52, 0x49, 0x46, 0x46, 0xff, 0x00, 0x80]).toString("base64") });
 
   const vercel = await json(path.join(out, "vercel.json"));
   assert.deepEqual(vercel.headers[0].headers.map((header) => header.key), ["Cross-Origin-Embedder-Policy", "Cross-Origin-Opener-Policy"]);

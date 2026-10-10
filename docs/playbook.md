@@ -54,6 +54,7 @@ What the module already handles, and why:
 - **The stream, not `agent-browser record`.** `record start` opens a fresh page (state is lost) and writes a fixed 10 fps without frame timestamps, so a busy page comes out sped up. The stream sends frames with `metadata.timestamp`; FFmpeg's concat demuxer gets each frame's real duration.
 - **Lower load:** the stream is captured at the output width, with a 1280x800 viewport.
 - **Encoding:** `fps=20`, `libwebp_anim -quality 75 -compression_level 6 -loop 0`, 960 px wide. An 18 s game clip came to about 700 KB. libwebp merges identical frames, so check the duration, not the frame count.
+- **Still screens:** the stream only sends a frame when something changes, so a clip opens on the frame already on screen and its last frame lasts until the end of the take. A terminal demo is mostly still screens.
 - **A frame sheet** of twelve frames is written to the temp directory. Look at it before committing; every bug below was visible in one.
 
 What stays in the project:
@@ -63,7 +64,7 @@ What stays in the project:
 - **Frame for the card, not the screen.** Portfolio cards often crop with `object-fit: cover` from the top at roughly 3:1. Crop to the band where the action is, which also makes it larger in the README.
 - **Loop seams:** start and end on a calm frame, and wait for dialogs to finish closing before the clip starts. Return `{ startAt }` from `drive` (the page's `Date.now()`) to trim the lead-in.
 
-CLIs: record a browser replay of a scripted session as the loop, and reach S with the in-browser terminal (`showcase terminal`, see `recipes/browser-terminal/`), which runs the real CLI with sample data and stand-ins for anything external.
+CLIs: build the in-browser terminal first (`showcase terminal`, see `recipes/browser-terminal/`), which runs the real CLI with sample data and stand-ins for anything external. It is the S tier, and recording it with `record` is the loop: click its hint buttons and press Ctrl-L between commands so each output starts at the top. showcase's own `scripts/capture-demo.mjs` does this.
 
 ## Hosting and the portfolio
 

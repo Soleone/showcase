@@ -1,0 +1,36 @@
+{
+  "project": "../..",
+  "pitch": "Grade how demoable a project is, from D to S. This is the real CLI, running in your browser on four sample projects.",
+  "mount": {
+    "node_modules/@soleone/showcase": {
+      "from": "../..",
+      "include": ["bin", "src", "schema", "package.json", "README.md", "LICENSE"]
+    },
+    "projects": { "from": "../projects" },
+    ".": { "from": "./home" }
+  },
+  "env": {
+    "PATH": "~/bin:/usr/local/bin:/usr/bin:/bin"
+  },
+  "setup": [
+    "chmod +x bin/showcase"
+  ],
+  "welcome": [
+    "\u001b[1mshowcase\u001b[0m grades how demoable a project is, from D to S, and says what it takes to reach the next tier.",
+    "Four sample projects are in ~/projects, one at each tier from D to A.",
+    "",
+    "  showcase check projects/*            the tier of each one",
+    "  showcase check projects/notecli      what notecli needs for A",
+    "  showcase init projects/notecli --dry-run",
+    "                                       draft its showcase.json",
+    "",
+    "Or press the buttons above."
+  ],
+  "hints": [
+    "showcase check projects/*",
+    "showcase check projects/notecli",
+    "showcase init projects/notecli --dry-run",
+    "showcase check projects/* --matrix",
+    "showcase --help"
+  ]
+}

@@ -35,11 +35,14 @@
     "src/",
     "schema/",
     "recipes/",
-    "docs/",
+    "docs/playbook.md",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "demo": "node bin/showcase.js check demo/projects/*",
+    "demo:browser": "node bin/showcase.js terminal --serve",
+    "media:capture": "node scripts/capture-demo.mjs"
   }
 }
