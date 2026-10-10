@@ -70,7 +70,7 @@ portfolio site     shows the result                  ← reads feed.json through
 
 - Done: logdig is S. https://logdig-demo.vercel.app runs the real CLI in a WebContainers sandbox (`recipes/browser-terminal/`, Gilt theme, WebGL, about 1 s to a ready shell when cached, about 3 s on a first visit while the runtime downloads).
 - `demo.externals` in showcase.json declares what a demo cannot reach and its stand-in; the page's disclosure is written from it.
-- Left: the user adds the wildcard CNAME at Namecheap, then alias `logdig.soleone.xyz` to the `logdig-demo` project.
+- Done (Oct 10): wildcard `*` CNAME to `cname.vercel-dns.com` at Namecheap; each subdomain is attached to its Vercel project (`vercel domains add <host> <project>`). logdig.soleone.xyz serves `logdig-demo`, vibestep.soleone.xyz serves `vibestep` (renamed from `beatfiend`).
 - Later: move logdig's seed and Pi stand-in into the logdig repo (`demo/browser/`), so the project owns its fakes; showcase keeps the generic page and builder.
 
 ### M6. The other flagships
