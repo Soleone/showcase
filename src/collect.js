@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { evaluate, tiers } from "./checks.js";
@@ -34,6 +34,26 @@ export function resolvePath(raw, base, env = process.env) {
     });
   if (missing.length) throw new Error(`${missing.map((name) => `$${name}`).join(", ")} not set`);
   return path.resolve(base, expanded);
+}
+
+// Entries that point at a folder another entry already covers, as {ignored id: kept id}. When one is reached
+// through a symlink (a project that moved and left a link behind) the real location is kept; otherwise the first.
+export async function findAliases(projects, base, env = process.env) {
+  const groups = new Map();
+  for (const entry of projects) {
+    if (!entry.path) continue;
+    try {
+      const dir = resolvePath(entry.path, base, env);
+      const real = await realpath(dir);
+      groups.set(real, [...(groups.get(real) ?? []), { entry, linked: real !== dir }]);
+    } catch { /* a missing folder is reported where it is used */ }
+  }
+  const aliases = {};
+  for (const group of groups.values()) {
+    const kept = group.find((member) => !member.linked) ?? group[0];
+    for (const member of group) if (member !== kept) aliases[member.entry.id] = kept.entry.id;
+  }
+  return aliases;
 }
 
 export function targetTier(priority, ceiling) {
@@ -122,10 +142,11 @@ export async function collect(configFile, { out, ...options }) {
   options = { fetch: globalThis.fetch, ...options };
   const config = await loadPortfolio(configFile);
   const base = path.dirname(path.resolve(configFile));
-  const results = await Promise.all(config.projects.map((entry) => collectOne(entry, base, out, options)));
+  const aliases = await findAliases(config.projects, base, options.env);
+  const results = await Promise.all(config.projects.filter((entry) => !aliases[entry.id]).map((entry) => collectOne(entry, base, out, options)));
   const feed = { projects: results.map((result) => JSON.parse(JSON.stringify(result.entry))) };
   await mkdir(out, { recursive: true });
   const file = path.join(out, "feed.json");
   await writeFile(file, `${JSON.stringify(feed, null, 2)}\n`);
-  return { file, feed, reports: results.map((result) => result.report).filter(Boolean), warnings: results.flatMap((result) => result.warnings) };
+  return { file, feed, reports: results.map((result) => result.report).filter(Boolean), warnings: [...Object.entries(aliases).map(([id, kept]) => `${id}: same folder as ${kept}, left out`), ...results.flatMap((result) => result.warnings)] };
 }

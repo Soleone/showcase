@@ -1,10 +1,10 @@
 import { existsSync } from "node:fs";
-import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, realpath, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { evaluate, tiers } from "./checks.js";
-import { gapTo, loadPortfolio, resolvePath, targetTier } from "./collect.js";
+import { findAliases, gapTo, loadPortfolio, resolvePath, targetTier } from "./collect.js";
 import { exists, loadProject, manifestName } from "./project.js";
 import { portfolioSchema, schema, validate } from "./schema.js";
 
@@ -188,10 +188,12 @@ export async function gradeRow(row, options = {}) {
   return { ...row, report, gap: gapTo(report, row.target) };
 }
 
-export async function loadEntries(configFile) {
+// The portfolio's entries, minus any that only repeat another's folder (see findAliases), which come back as ignored.
+export async function loadEntries(configFile, env = process.env) {
   const config = await loadPortfolio(configFile);
   const base = path.dirname(path.resolve(configFile));
-  return { base, entries: config.projects };
+  const ignored = await findAliases(config.projects, base, env);
+  return { base, entries: config.projects.filter((entry) => !ignored[entry.id]), ignored };
 }
 
 // The ways the list can be ordered. "order" is portfolio.json itself, the only one J/K can change.
@@ -282,10 +284,16 @@ export function storedPath(dir, configFile) {
 
 const entryFor = (dir, configFile, id) => ({ id, priority: null, path: storedPath(dir, configFile) });
 
-// The config entry that points at this folder, if any.
-function entryAt(config, configFile, dir, env) {
+// The config entry that points at this folder, if any. A symlink to the folder counts as the folder.
+async function entryAt(config, configFile, dir, env) {
   const base = path.dirname(path.resolve(configFile));
-  return config.projects.find((entry) => { try { return entry.path && resolvePath(entry.path, base, env) === dir; } catch { return false; } });
+  const real = await realpath(dir).catch(() => dir);
+  for (const entry of config.projects) {
+    try {
+      if (entry.path && await realpath(resolvePath(entry.path, base, env)).catch(() => resolvePath(entry.path, base, env)) === real) return entry;
+    } catch { /* an unset $VAR cannot match */ }
+  }
+  return undefined;
 }
 
 // The project the user is standing in: this folder or the nearest one above it with a project marker, never the home folder or above.
@@ -302,7 +310,7 @@ export async function unregisteredHere(configFile, { cwd = process.cwd(), env = 
   if (!dir) return null;
   const base = path.dirname(path.resolve(configFile));
   if (base === dir || base.startsWith(`${dir}${path.sep}`)) return null;
-  return entryAt(await readJson(configFile), configFile, dir, env) ? null : dir;
+  return (await entryAt(await readJson(configFile), configFile, dir, env)) ? null : dir;
 }
 
 // Adds a project folder to the config, unless it is already there.
@@ -317,7 +325,7 @@ export async function addProject(configFile, input, { cwd = process.cwd(), env =
   }
   if (!(await isDirectory(dir))) return { error: `${dir} is not a folder` };
   const config = await readJson(configFile);
-  const known = entryAt(config, configFile, dir, env);
+  const known = await entryAt(config, configFile, dir, env);
   if (known) return { error: `${known.id} already points there` };
   const name = path.basename(dir).toLowerCase();
   let id = wanted ?? `local:${name}`;

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile, stat, writeFile } from "node:fs/promises";
+import { readFile, stat, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { collect, resolvePath, targetTier } from "../src/collect.js";
@@ -57,4 +57,14 @@ test("paths expand ~ and $VARS and resolve from the config folder", () => {
   assert.equal(resolvePath("${SRC}/a", "/cfg", { SRC: "/src" }), "/src/a");
   assert.equal(resolvePath("rel/b", "/cfg", {}), "/cfg/rel/b");
   assert.throws(() => resolvePath("$NOPE/c", "/cfg", {}), /\$NOPE not set/);
+});
+
+test("a folder reached through a symlink is listed once, as the real location", async () => {
+  const root = await fixture({ "real/README.md": "# Real\n\nReal does one useful thing for you every day.\n" });
+  await symlink(path.join(root, "real"), path.join(root, "old"));
+  const config = path.join(root, "portfolio.json");
+  await writeFile(config, JSON.stringify({ projects: [{ id: "local:old", path: "old" }, { id: "local:real", path: "real" }] }));
+  const { feed, warnings } = await collect(config, { out: path.join(root, "site"), offline: true });
+  assert.deepEqual(feed.projects.map((project) => project.id), ["local:real"]);
+  assert.deepEqual(warnings, ["local:old: same folder as local:real, left out"]);
 });

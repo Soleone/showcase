@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
-import { readFile, stat, writeFile } from "node:fs/promises";
+import { readFile, stat, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
-import { createConfig, findConfig, sortRows } from "../src/manage.js";
+import { addProject, createConfig, findConfig, sortRows } from "../src/manage.js";
 import { createApp, parseKeys, wrap } from "../src/tui.js";
 import { fixture, manifest, polishedFiles } from "./helpers.js";
 
@@ -306,4 +306,18 @@ test("s cycles the sort and the selected project stays selected", async () => {
   await press(app, "s");
   assert.match(text(app), /by gap to target, biggest first/);
   assert.equal(JSON.stringify(await json(configFile)), before);
+});
+
+test("a symlink to a project already in the portfolio is ignored, and cannot be added again", async () => {
+  const { app, root, configFile } = await setup();
+  await symlink(path.join(root, "demo"), path.join(root, "old-demo"));
+  const config = await json(configFile);
+  config.projects.unshift({ id: "local:old-demo", priority: null, path: "old-demo" });
+  await writeFile(configFile, JSON.stringify(config));
+  await app.load();
+  await app.idle();
+  assert.deepEqual(app.state.rows.map((row) => row.id).sort(), ["github:me/remote", "local:demo", "local:plain"]);
+  assert.match(text(app), /Ignoring local:old-demo \(same folder as local:demo\)/);
+  await symlink(path.join(root, "plain"), path.join(root, "plain-link"));
+  assert.deepEqual(await addProject(configFile, path.join(root, "plain-link")), { error: "local:plain already points there" });
 });

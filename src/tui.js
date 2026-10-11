@@ -82,12 +82,14 @@ export function createApp({ configFile, cwd = process.cwd(), notice = null, offl
 
   // Lists the projects at once, then opens and grades each in the background.
   async function load() {
-    const { base, entries } = await loadEntries(configFile);
+    const { base, entries, ignored } = await loadEntries(configFile, env);
     const selected = state.rows[state.cursor]?.id;
     state.base = base;
     state.order = entries.map((entry) => entry.id);
     state.rows = entries.map((entry) => ({ id: entry.id, entry, gap: [], target: null, grading: false, note: "loading" }));
     resort(selected);
+    const repeats = Object.entries(ignored);
+    if (repeats.length) flash(`Ignoring ${repeats.map(([id, kept]) => `${id} (same folder as ${kept})`).join(", ")}`);
     onChange();
     for (const entry of entries) {
       track((async () => {
@@ -101,7 +103,7 @@ export function createApp({ configFile, cwd = process.cwd(), notice = null, offl
 
   // Picks up what an edit changed: the entry from the config, the project from disk, then the grade.
   async function reload(row) {
-    const { base, entries } = await loadEntries(configFile);
+    const { base, entries } = await loadEntries(configFile, env);
     const entry = entries.find((candidate) => candidate.id === row.id);
     if (!entry) return;
     const opened = await openRow(entry, base, env);
