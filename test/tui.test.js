@@ -123,6 +123,26 @@ test("J and K reorder the portfolio on disk", async () => {
   assert.deepEqual((await json(configFile)).projects.map((entry) => entry.id), ["local:demo", "local:plain", "github:me/remote"]);
 });
 
+test("m picks a project up, the arrows move it in portfolio.json, enter drops it and escape puts it back", async () => {
+  const { app, configFile } = await setup();
+  const ids = async () => (await json(configFile)).projects.map((entry) => entry.id);
+  await press(app, "m");
+  assert.match(text(app), /by portfolio.json order/);
+  assert.match(text(app), /Moving Demo/);
+  await press(app, "j", "j");
+  assert.deepEqual(await ids(), ["local:plain", "github:me/remote", "local:demo"]);
+  assert.equal(app.state.cursor, 2);
+  await press(app, "g");
+  assert.deepEqual(await ids(), ["local:demo", "local:plain", "github:me/remote"]);
+  await press(app, "G", "\r");
+  assert.deepEqual(await ids(), ["local:plain", "github:me/remote", "local:demo"]);
+  assert.match(text(app), /Dropped Demo at position 3/);
+  assert.doesNotMatch(text(app), /Moving Demo/);
+  await press(app, "m", "k", "k", "\x1b");
+  assert.deepEqual(await ids(), ["local:plain", "github:me/remote", "local:demo"]);
+  assert.match(text(app), /Put back where it was/);
+});
+
 test("a project without showcase.json can get a draft", async () => {
   const { app, root } = await setup();
   await press(app, "j", "\r");

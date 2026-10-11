@@ -2,7 +2,7 @@ import os from "node:os";
 import path from "node:path";
 import { targetTier } from "./collect.js";
 import { init } from "./init.js";
-import { addProject, createConfig, findConfig, fromText, gradeRow, loadEntries, manifestFields, moveProject, openRow, options, portfolioFields, removeProject, setManifestField, setPortfolioField, sortRows, sorts, stageOf, titleOf, toText, unregisteredHere } from "./manage.js";
+import { addProject, createConfig, findConfig, fromText, gradeRow, loadEntries, manifestFields, moveProjectTo, openRow, options, portfolioFields, removeProject, setManifestField, setPortfolioField, sortRows, sorts, stageOf, titleOf, toText, unregisteredHere } from "./manage.js";
 import { manifestName } from "./project.js";
 import { bold, dim, green, muted, paint, red, tierLabel, yellow } from "./report.js";
 
@@ -57,7 +57,7 @@ function items(row) {
 }
 
 export function createApp({ configFile, cwd = process.cwd(), notice = null, offline = false, env = process.env, fetch = globalThis.fetch, onChange = () => {} } = {}) {
-  const state = { rows: [], screen: "list", cursor: 0, field: 0, edit: null, confirm: null, status: notice ? { text: notice, kind: "ok" } : null, base: null, sort: "priority", order: [] };
+  const state = { rows: [], screen: "list", cursor: 0, field: 0, edit: null, confirm: null, status: notice ? { text: notice, kind: "ok" } : null, base: null, sort: "priority", order: [], grab: null };
   const pending = new Set();
 
   const flash = (text, kind = "info") => { state.status = { text, kind }; };
@@ -228,7 +228,38 @@ export function createApp({ configFile, cwd = process.cwd(), notice = null, offl
     onChange();
   }
 
+  // Moves the displayed row to where another displayed row is; the file is written first, so the list never disagrees with it.
+  async function shift(from, to) {
+    const row = state.rows[from];
+    to = Math.max(Math.min(to, state.rows.length - 1), 0);
+    if (to === from) return row;
+    if (!(await moveProjectTo(configFile, row.id, state.rows[to].id))) return null;
+    state.rows.splice(to, 0, state.rows.splice(from, 1)[0]);
+    state.order = state.rows.map((existing) => existing.id);
+    state.cursor = to;
+    return row;
+  }
+
+  // A picked-up project moves in portfolio.json as the arrow keys are pressed; every step is already saved.
+  async function grabKey(key) {
+    const at = state.rows.findIndex((row) => row.id === state.grab.id);
+    const name = key.name === "char" ? key.text : key.name;
+    const target = { up: at - 1, k: at - 1, down: at + 1, j: at + 1, pageup: at - 10, pagedown: at + 10, home: 0, g: 0, end: Infinity, G: Infinity }[name];
+    if (target !== undefined) return void await shift(at, target);
+    if (name === "escape" || name === "ctrl-c") {
+      await shift(at, state.grab.start);
+      state.grab = null;
+      return flash("Put back where it was");
+    }
+    if (name === "m" || name === "enter" || name === " ") {
+      const row = state.rows[at];
+      state.grab = null;
+      return flash(`Dropped ${titleOf(row)} at position ${at + 1}`, "ok");
+    }
+  }
+
   async function listKey(key) {
+    if (state.grab) return grabKey(key);
     const move = (to) => { state.cursor = Math.max(Math.min(to, state.rows.length - 1), 0); };
     switch (key.name === "char" ? key.text : key.name) {
       case "a": return addPrompt();
@@ -265,12 +296,16 @@ export function createApp({ configFile, cwd = process.cwd(), notice = null, offl
       case "J": case "K": {
         if (state.sort !== "order") return flash("Press s until it says portfolio.json order, then reorder", "error");
         const delta = key.text === "J" ? 1 : -1;
+        const row = await shift(state.cursor, state.cursor + delta);
+        return row && flash(`Moved ${titleOf(row)} to position ${state.cursor + 1}`, "ok");
+      }
+      case "m": {
         const row = current();
-        if (!(await moveProject(configFile, row.id, delta))) return;
-        state.rows.splice(state.cursor + delta, 0, state.rows.splice(state.cursor, 1)[0]);
-        state.order = state.rows.map((existing) => existing.id);
-        state.cursor += delta;
-        return flash(`Moved ${titleOf(row)} to position ${state.cursor + 1}`, "ok");
+        if (!row) return;
+        state.sort = "order";
+        resort();
+        state.grab = { id: row.id, start: state.cursor };
+        return;
       }
       case "r": flash("Refreshing"); track(load()); return;
       case "q": state.quit = true; return;
@@ -357,7 +392,11 @@ function listScreen(state, configFile, width, height) {
     lines.push(` ${tier}${" ".repeat(4)}${cell(row.target ?? "-", 5, row.target ? (value) => value : dim)}${cell(row.entry.priority ?? "-", widths.pri + 2, row.entry.priority ? (value) => value : dim)}${cell(stageOf(row) ?? "-", widths.stage + 2, stageOf(row) ? (value) => value : dim)}${cell(titleOf(row), widths.name + 2, bold)}${cell(report?.kind ?? "", widths.kind + 2, dim)}${gapStyle(gap)}`);
   });
   if (first + room < rows.length) lines.push(dim(` ↓ ${rows.length - first - room} more`));
-  return { lines, cursor: null, footer: " ↑↓ select   enter open   s sort   a add   d remove   J/K reorder   r refresh   q quit" };
+  if (state.grab) {
+    lines.push("", ` ${yellow(`Moving ${titleOf(rows[state.cursor])}`)} ${dim("in portfolio.json order, which sorts projects of the same priority and tier on the site")}`);
+    return { lines, cursor: null, footer: " ↑↓ move   pgup/pgdn jump 10   g/G top/bottom   m or enter drop   esc put back" };
+  }
+  return { lines, cursor: null, footer: " ↑↓ select   enter open   s sort   m move   a add   d remove   r refresh   q quit" };
 }
 
 // The goal comes from the portfolio priority; a ceiling in showcase.json can only lower it, never raise it.

@@ -154,14 +154,16 @@ export async function setManifestField(root, field, value) {
   return { errors: [] };
 }
 
-// Moves a project up (-1) or down (1) in portfolio order.
-export async function moveProject(configFile, id, delta) {
+// Moves a project to the place another one holds in portfolio order. Returns false when either is unknown.
+export async function moveProjectTo(configFile, id, otherId) {
   const config = await readJson(configFile);
   const from = config.projects.findIndex((entry) => entry.id === id);
-  const to = from + delta;
-  if (from < 0 || to < 0 || to >= config.projects.length) return false;
-  config.projects.splice(to, 0, config.projects.splice(from, 1)[0]);
-  await writeJson(configFile, config);
+  const to = config.projects.findIndex((entry) => entry.id === otherId);
+  if (from < 0 || to < 0) return false;
+  if (from !== to) {
+    config.projects.splice(to, 0, config.projects.splice(from, 1)[0]);
+    await writeJson(configFile, config);
+  }
   return true;
 }
 

@@ -118,7 +118,7 @@ It is a full-screen list of every project with its tier, the goal its priority s
 
 - `enter` opens a project, which also says where its goal comes from (the priority; a `ceiling` can only lower it), where `enter` edits a text field, `←` `→` change a choice, and `n` drafts a missing showcase.json from the README.
 - `s` cycles the sort: priority then tier (the start), tier, gap to the goal, or the order in portfolio.json. Sorting is only a view and the selection stays on the same project.
-- `a` adds a project by path, `d` removes one from the portfolio (its files stay), `J` `K` change the order in portfolio.json (switch to that sort first).
+- `a` adds a project by path, `d` removes one from the portfolio (its files stay), `m` picks a project up: the arrows move it (`pgup`/`pgdn` jump 10, `g`/`G` go to the top or bottom), `enter` or `m` drops it, `esc` puts it back, and every step is saved to portfolio.json. `J` `K` move one step in the portfolio.json order sort. Portfolio sites can use that order to rank projects that share a priority and tier.
 - `r` refreshes, `q` quits.
 
 Fields come from the two schemas, so the limits you see while typing (`n/160`) are the validator's. Every edit is written right away. Changing an existing value touches only that value, so the diff is one line (adding or clearing a field rewrites the file in the same order): the config for priority and path (plus title and repo, but only for a project without a showcase.json, whose own facts always win), the project's own showcase.json for its facts. Nested `media` and `demo` stay hand-edited.
