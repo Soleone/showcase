@@ -17,5 +17,6 @@
     "strategy": "browser-terminal",
     "local": "npm run demo",
     "externals": []
-  }
+  },
+  "ceiling": "S"
 }
