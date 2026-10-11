@@ -178,4 +178,4 @@ npm run demo:browser    # the same in the browser terminal, on 127.0.0.1:4321
 npm run media:capture   # re-record docs/media from the browser demo
 ```
 
-Releases are automated with release-please. Commit with Conventional Commits (`feat:`, `fix:`); merging the release PR it opens tags the version, writes `CHANGELOG.md` and publishes to npm through trusted publishing.
+Releases run from your machine with release-it. Commit with Conventional Commits (`feat:`, `fix:`); `npm run release` then tests, picks the next version, writes `CHANGELOG.md`, commits, tags and publishes to npm. `npm run release:dry-run` shows what it would do. The very first release publishes the version already in package.json: `npm run release -- --no-increment`.

@@ -46,11 +46,22 @@
     "test": "node --test",
     "demo": "node bin/showcase.js check demo/projects/*",
     "demo:browser": "node bin/showcase.js terminal --serve",
-    "media:capture": "node scripts/capture-demo.mjs"
+    "media:capture": "node scripts/capture-demo.mjs",
+    "release": "release-it",
+    "release:dry-run": "npm test && release-it --dry-run"
   },
   "pi": {
     "skills": [
       "./skills"
     ]
+  },
+  "devDependencies": {
+    "@release-it/conventional-changelog": "^10.0.6",
+    "release-it": "^19.2.4"
+  },
+  "overrides": {
+    "release-it": {
+      "undici": "^7.30.0"
+    }
   }
 }
