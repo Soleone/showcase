@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
+import path from "node:path";
 import { parseArgs } from "node:util";
 import { evaluate, tiers } from "../src/checks.js";
 import { collect } from "../src/collect.js";
 import { init } from "../src/init.js";
-import { addProject, findConfig, portfolioFields, removeProject, setPortfolioField } from "../src/manage.js";
+import { addProject, findConfig, manifestFields, openRow, portfolioFields, removeProject, setManifestField, setPortfolioField, stageOf } from "../src/manage.js";
 import { inspectMotion, runCapture } from "../src/inspect.js";
 import { loadPortfolio } from "../src/collect.js";
 import { loadProject } from "../src/project.js";
@@ -24,10 +25,10 @@ Usage:
                              <dir>/feed.json plus copies of the local media
   showcase manage [config]   Browse your projects and edit their metadata. Finds the
                              portfolio by itself (see below); give a path once to switch
-  showcase add <path>        Put a project in the portfolio (--id, --priority, --stage);
+  showcase add <path>        Put a project in the portfolio (--id, --priority);
                              without a folder: showcase add --repo <url> --id <id>
   showcase remove <id>       Take a project out of the portfolio; its files stay
-  showcase set <id>          Change a project's --priority (or none) or --stage
+  showcase set <id>          Change a project's --priority (or none) or its showcase.json --stage
   showcase list              The portfolio's projects (--json for scripts)
   showcase capture [path]    Re-record the media with media.capture, then check media.motion
   showcase terminal [recipe] Build the in-browser terminal demo for a CLI from a folder
@@ -41,7 +42,7 @@ Options:
   --id <id>      Id for the new project (add), default local:<folder name>
   --priority <p> high, mid or low (add, set)
   --repo <url>   Add a project that has no local folder (add)
-  --stage <s>    How far along it is, e.g. prototype (add, set)
+  --stage <s>    product, prototype or proof of concept, saved in its showcase.json (set)
   --offline      Do not request the live URL (check, collect, manage)
   --out <dir>    Where to write feed.json and media/ (collect), or the page
                  (terminal, default dist/browser)
@@ -120,22 +121,34 @@ async function portfolio(command, paths, values) {
   const file = await configFor(values.config);
   if (command === "list") {
     const { projects } = await loadPortfolio(file);
-    if (values.json) return console.log(JSON.stringify(projects, null, 2));
+    if (values.json) {
+      const opened = await Promise.all(projects.map((project) => openRow(project, path.dirname(file))));
+      return console.log(JSON.stringify(projects.map((project, i) => ({ ...project, stage: stageOf(opened[i]) ?? null })), null, 2));
+    }
     const width = Math.max(...projects.map((project) => project.id.length), 2);
     return console.log(projects.map((project) => `${project.id.padEnd(width)}  ${(project.priority ?? "-").padEnd(4)}  ${project.path ?? project.repo ?? ""}`).join("\n"));
   }
   if (command === "add") {
-    const { id, error } = await addProject(file, paths[0] ?? "", { id: values.id, priority: values.priority ?? null, stage: values.stage, repo: values.repo });
+    const { id, error } = await addProject(file, paths[0] ?? "", { id: values.id, priority: values.priority ?? null, repo: values.repo });
     if (error) throw new Error(error);
     return console.log(`Added ${id} to ${file}`);
   }
   const { projects } = await loadPortfolio(file);
-  if (!projects.some((project) => project.id === paths[0])) throw new Error(`${paths[0]} is not in ${file}`);
+  const project = projects.find((candidate) => candidate.id === paths[0]);
+  if (!project) throw new Error(`${paths[0]} is not in ${file}`);
   if (command === "set") {
     const changes = [["priority", values.priority], ["stage", values.stage]].filter(([, value]) => value !== undefined);
     if (!changes.length) throw new Error("Nothing to set. Pass --priority and/or --stage.");
     for (const [key, raw] of changes) {
-      const { errors } = await setPortfolioField(file, paths[0], portfolioFields.find((field) => field.key === key), raw === "none" ? null : raw);
+      const value = raw === "none" ? null : raw;
+      let errors;
+      if (key === "stage") {
+        const row = await openRow(project, path.dirname(file));
+        if (!row.project?.manifest?.data) throw new Error(`${paths[0]} has no showcase.json to save the stage in. Draft one with showcase manage (n), or showcase init.`);
+        ({ errors } = await setManifestField(row.root, manifestFields.find((field) => field.key === "stage"), value));
+      } else {
+        ({ errors } = await setPortfolioField(file, paths[0], portfolioFields.find((field) => field.key === key), value));
+      }
       if (errors.length) throw new Error(errors.join("; "));
     }
     return console.log(`Updated ${paths[0]} in ${file}`);

@@ -57,6 +57,7 @@ The project's facts for any portfolio to use. How much a portfolio cares about t
   "pitch": "Turns a folder of session logs into a daily journal you can read.",
   "description": "Reads the session logs your coding agent already saves, groups them by day and writes a Markdown journal. Your handwritten notes are never touched.",
   "kind": "cli",
+  "stage": "product",
   "year": 2026,
   "tech": ["Node.js"],
   "repo": "https://github.com/you/notecli",
@@ -91,7 +92,7 @@ A portfolio picks its projects in `portfolio.json`, in the order it shows them (
 ```json
 {
   "projects": [
-    { "id": "local:notecli", "priority": "high", "stage": "product", "path": "$HOME/code/notecli" },
+    { "id": "local:notecli", "priority": "high", "path": "$HOME/code/notecli" },
     { "id": "github:you/old-library", "title": "old-library", "priority": "low", "repo": "https://github.com/you/old-library" }
   ]
 }
@@ -117,15 +118,16 @@ It is a full-screen list of every project with its tier, the goal its priority s
 - `a` adds a project by path, `d` removes one from the portfolio (its files stay), `J` `K` change the order.
 - `r` refreshes, `q` quits.
 
-Fields come from the two schemas, so the limits you see while typing (`n/160`) are the validator's. Every edit is written right away and changes only that value, so the diff is one line: the config for priority, stage and path (plus title and repo, but only for a project without a showcase.json, whose own facts always win), the project's own showcase.json for its facts. Nested `media` and `demo` stay hand-edited.
+Fields come from the two schemas, so the limits you see while typing (`n/160`) are the validator's. Every edit is written right away and changes only that value, so the diff is one line: the config for priority and path (plus title and repo, but only for a project without a showcase.json, whose own facts always win), the project's own showcase.json for its facts. Nested `media` and `demo` stay hand-edited.
 
 For scripts and other tools, the same portfolio is available without the UI:
 
 ```sh
 showcase list --json                                  # the projects, in portfolio order
-showcase add ~/code/notecli --priority high --stage product
+showcase add ~/code/notecli --priority high
 showcase add --repo https://github.com/you/old --id github:you/old   # no local folder
 showcase set local:notecli --priority mid
+showcase set local:notecli --stage prototype          # saved in its showcase.json
 showcase remove local:notecli                         # its files stay
 showcase collect --out public/showcase                # no path needed either
 ```

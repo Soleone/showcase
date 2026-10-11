@@ -17,13 +17,13 @@ async function setup() {
     "demo/docs/hero.png": "png",
     "demo/docs/loop.webp": polishedFiles["docs/loop.webp"],
     "demo/package.json": polishedFiles["package.json"],
-    "demo/showcase.json": manifest,
+    "demo/showcase.json": { ...manifest, stage: "product" },
     "plain/README.md": "# Plain\n\nPlain keeps a small list of things that matter to you.\n",
   });
   const configFile = path.join(root, "portfolio.json");
   await writeFile(configFile, JSON.stringify({
     projects: [
-      { id: "local:demo", priority: "high", stage: "product", path: "demo" },
+      { id: "local:demo", priority: "high", path: "demo" },
       { id: "local:plain", priority: null, path: "plain" },
       { id: "github:me/remote", title: "remote", path: null },
     ],
@@ -68,7 +68,7 @@ test("changing priority writes the config and moves the goal", async () => {
 test("editing a showcase.json field saves it, and the schema rejects what it forbids", async () => {
   const { app, manifestFile } = await setup();
   await press(app, "\r");
-  for (let i = 0; i < 4; i += 1) await press(app, "j");
+  for (let i = 0; i < 3; i += 1) await press(app, "j");
   await press(app, "\r");
   assert.match(text(app), /pitch\s+\d+\/160/);
   await press(app, "\x15", "x".repeat(170), "\r");
@@ -82,17 +82,17 @@ test("editing a showcase.json field saves it, and the schema rejects what it for
 test("clearing a required field is refused and an optional list round-trips", async () => {
   const { app, manifestFile } = await setup();
   await press(app, "\r");
-  for (let i = 0; i < 3; i += 1) await press(app, "j");
+  for (let i = 0; i < 2; i += 1) await press(app, "j");
   await press(app, "\r", "\x15", "\r");
   assert.match(text(app), /title: required/);
   await press(app, "\x1b");
   assert.equal((await json(manifestFile)).title, "Demo");
 
-  for (let i = 0; i < 5; i += 1) await press(app, "j");
+  for (let i = 0; i < 6; i += 1) await press(app, "j");
   await press(app, "\r", "Node.js,  SQLite", "\r");
   const saved = await json(manifestFile);
   assert.deepEqual(saved.tech, ["Node.js", "SQLite"]);
-  assert.deepEqual(Object.keys(saved).slice(0, 6), ["title", "pitch", "description", "kind", "tech", "media"]);
+  assert.deepEqual(Object.keys(saved).slice(0, 7), ["title", "pitch", "description", "kind", "stage", "tech", "media"]);
 });
 
 test("J and K reorder the portfolio on disk", async () => {
@@ -116,7 +116,7 @@ test("a project without showcase.json can get a draft", async () => {
 test("the editor puts the cursor inside the wrapped text", async () => {
   const { app } = await setup();
   await press(app, "\r");
-  for (let i = 0; i < 5; i += 1) await press(app, "j");
+  for (let i = 0; i < 4; i += 1) await press(app, "j");
   await press(app, "\r", "\x1b[H");
   const { cursor, lines } = app.render(size);
   assert.match(lines[cursor.row], /^ {3}Reads your session logs/);
@@ -135,8 +135,8 @@ test("the list can be drawn while projects are still loading", async () => {
 
 test("keys that arrive in one chunk are separate presses outside the editor but one paste inside it", async () => {
   const { app, manifestFile } = await setup();
-  await press(app, "\rjjjj\r");
-  assert.equal(app.state.field, 4);
+  await press(app, "\rjjj\r");
+  assert.equal(app.state.field, 3);
   assert.ok(app.state.edit);
   await press(app, "\x15jj kk\r");
   assert.equal((await json(manifestFile)).pitch, "jj kk");
@@ -147,11 +147,11 @@ test("editing one value leaves the rest of the file exactly as it was", async ()
   const original = `{\n  "title": "Demo",   "pitch": "Old \\"pitch\\", with commas",\n  "description": "Reads logs.",\n  "kind": "cli",\n  "tech": ["Node.js", "SQLite"],\n  "media": { "hero": "docs/hero.png" }\n}\n`;
   await writeFile(manifestFile, original);
   await press(app, "r");
-  await press(app, "\rjjjj\r", "\x15New pitch\r");
+  await press(app, "\rjjj\r", "\x15New pitch\r");
   assert.equal(await readFile(manifestFile, "utf8"), original.replace(/"Old .*?commas"/, '"New pitch"'));
 
   const config = await readFile(path.join(root, "portfolio.json"), "utf8");
-  await press(app, "k", "k", "k", "k", "\x1b[C");
+  await press(app, "k", "k", "k", "\x1b[C");
   assert.notEqual(await readFile(path.join(root, "portfolio.json"), "utf8"), config);
 });
 
@@ -267,4 +267,15 @@ test("the portfolio title and repo only show for a project without a showcase.js
   await press(app, "\x1b", "j", "j", "\r");
   assert.match(text(app), /\n title\b[^\n]*remote/);
   assert.match(text(app), /\n repo\b/);
+});
+
+test("stage is a choice in showcase.json, cycled like priority", async () => {
+  const { app, manifestFile } = await setup();
+  await press(app, "\r");
+  for (let i = 0; i < 6; i += 1) await press(app, "j");
+  assert.match(text(app), /◂ product ▸/);
+  await press(app, "\x1b[C");
+  assert.equal((await json(manifestFile)).stage, "prototype");
+  await press(app, "\x1b[C", "\x1b[C");
+  assert.equal((await json(manifestFile)).stage, undefined, "past the last choice it is unset again");
 });

@@ -194,6 +194,9 @@ export async function loadEntries(configFile) {
   return { base, entries: config.projects };
 }
 
+// How far along a project is, as its showcase.json says.
+export const stageOf = (row) => row.project?.manifest?.data?.stage;
+
 // The title shown for a project: showcase.json first, then the portfolio entry, then its id.
 export function titleOf(row) {
   const data = row.project?.manifest?.data;
@@ -282,8 +285,8 @@ export async function unregisteredHere(configFile, { cwd = process.cwd(), env = 
 }
 
 // Adds a project folder to the config, unless it is already there.
-export async function addProject(configFile, input, { cwd = process.cwd(), env = process.env, id: wanted, priority = null, stage = null, repo } = {}) {
-  if (!input.trim() && repo) return addRemote(configFile, { id: wanted, priority, stage, repo });
+export async function addProject(configFile, input, { cwd = process.cwd(), env = process.env, id: wanted, priority = null, repo } = {}) {
+  if (!input.trim() && repo) return addRemote(configFile, { id: wanted, priority, repo });
   if (!input.trim()) return { error: "Type the path to a project folder" };
   let dir;
   try {
@@ -302,7 +305,7 @@ export async function addProject(configFile, input, { cwd = process.cwd(), env =
   const entry = entryFor(dir, configFile, id);
   // A path typed with ~ or $VAR stays that way, so the config does not hard-code this machine's folders.
   if (/^[~$]/.test(input.trim())) entry.path = input.trim();
-  Object.assign(entry, { priority, ...(stage ? { stage } : {}) });
+  entry.priority = priority;
   const errors = validate({ projects: [entry] }, portfolioSchema);
   if (errors.length) return { error: errors.map((error) => error.replace(/^projects\[0\]\./, "")).join("; ") };
   config.projects.push(entry);
@@ -311,13 +314,13 @@ export async function addProject(configFile, input, { cwd = process.cwd(), env =
 }
 
 // A project with no local checkout, listed by its repo (graded as "no local path", shown by the portfolio).
-async function addRemote(configFile, { id, priority, stage, repo }) {
+async function addRemote(configFile, { id, priority, repo }) {
   if (!id) return { error: "A project without a folder needs an --id" };
   const config = await readJson(configFile);
   if (config.projects.some((entry) => entry.id === id)) return { error: `${id} is already in the portfolio` };
   const known = config.projects.find((entry) => entry.repo === repo);
   if (known) return { error: `${known.id} already points there` };
-  const entry = { id, priority, ...(stage ? { stage } : {}), path: null, repo };
+  const entry = { id, priority, path: null, repo };
   const errors = validate({ projects: [entry] }, portfolioSchema);
   if (errors.length) return { error: errors.map((error) => error.replace(/^projects\[0\]\./, "")).join("; ") };
   config.projects.push(entry);
