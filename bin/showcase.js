@@ -24,7 +24,8 @@ Usage:
                              <dir>/feed.json plus copies of the local media
   showcase manage [config]   Browse your projects and edit their metadata. Finds the
                              portfolio by itself (see below); give a path once to switch
-  showcase add <path>        Put a project in the portfolio (--id, --priority, --type)
+  showcase add <path>        Put a project in the portfolio (--id, --priority, --type);
+                             without a folder: showcase add --repo <url> --id <id>
   showcase remove <id>       Take a project out of the portfolio; its files stay
   showcase set <id>          Change a project's --priority (or none) or --type
   showcase list              The portfolio's projects (--json for scripts)
@@ -39,6 +40,7 @@ Options:
   --config <f>   Use this portfolio.json (add, remove, list, collect)
   --id <id>      Id for the new project (add), default local:<folder name>
   --priority <p> high, mid or low (add, set)
+  --repo <url>   Add a project that has no local folder (add)
   --type <t>     How the portfolio labels it, e.g. product (add, set)
   --offline      Do not request the live URL (check, collect, manage)
   --out <dir>    Where to write feed.json and media/ (collect), or the page
@@ -113,7 +115,8 @@ async function configFor(explicit) {
 }
 
 async function portfolio(command, paths, values) {
-  if (command === "list" ? paths.length : paths.length !== 1) throw new Error(command === "list" ? "list takes no arguments" : `Usage: showcase ${command} ${command === "add" ? "<path>" : "<id>"}`);
+  const expected = command === "list" ? 0 : command === "add" && values.repo ? 0 : 1;
+  if (paths.length !== expected) throw new Error(command === "list" ? "list takes no arguments" : `Usage: showcase ${command} ${command === "add" ? "<path>" : "<id>"}`);
   const file = await configFor(values.config);
   if (command === "list") {
     const { projects } = await loadPortfolio(file);
@@ -122,7 +125,7 @@ async function portfolio(command, paths, values) {
     return console.log(projects.map((project) => `${project.id.padEnd(width)}  ${(project.priority ?? "-").padEnd(4)}  ${project.path ?? project.repo ?? ""}`).join("\n"));
   }
   if (command === "add") {
-    const { id, error } = await addProject(file, paths[0], { id: values.id, priority: values.priority ?? null, type: values.type });
+    const { id, error } = await addProject(file, paths[0] ?? "", { id: values.id, priority: values.priority ?? null, type: values.type, repo: values.repo });
     if (error) throw new Error(error);
     return console.log(`Added ${id} to ${file}`);
   }
@@ -158,6 +161,7 @@ async function main() {
       id: { type: "string" },
       priority: { type: "string" },
       type: { type: "string" },
+      repo: { type: "string" },
       serve: { type: "boolean" },
       port: { type: "string" },
       help: { type: "boolean", short: "h" },

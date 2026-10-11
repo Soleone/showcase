@@ -124,6 +124,7 @@ For scripts and other tools, the same portfolio is available without the UI:
 ```sh
 showcase list --json                                  # the projects, in portfolio order
 showcase add ~/code/notecli --priority high --type product
+showcase add --repo https://github.com/you/old --id github:you/old   # no local folder
 showcase set local:notecli --priority mid
 showcase remove local:notecli                         # its files stay
 showcase collect --out public/showcase                # no path needed either

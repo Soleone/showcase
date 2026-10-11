@@ -301,7 +301,8 @@ export async function unregisteredHere(configFile, { cwd = process.cwd(), env = 
 }
 
 // Adds a project folder to the config, unless it is already there.
-export async function addProject(configFile, input, { cwd = process.cwd(), env = process.env, id: wanted, priority = null, type = null } = {}) {
+export async function addProject(configFile, input, { cwd = process.cwd(), env = process.env, id: wanted, priority = null, type = null, repo } = {}) {
+  if (!input.trim() && repo) return addRemote(configFile, { id: wanted, priority, type, repo });
   if (!input.trim()) return { error: "Type the path to a project folder" };
   let dir;
   try {
@@ -321,6 +322,21 @@ export async function addProject(configFile, input, { cwd = process.cwd(), env =
   // A path typed with ~ or $VAR stays that way, so the config does not hard-code this machine's folders.
   if (/^[~$]/.test(input.trim())) entry.path = input.trim();
   Object.assign(entry, { priority, ...(type ? { type } : {}) });
+  const errors = validate({ projects: [entry] }, portfolioSchema);
+  if (errors.length) return { error: errors.map((error) => error.replace(/^projects\[0\]\./, "")).join("; ") };
+  config.projects.push(entry);
+  await writeJson(configFile, config);
+  return { id };
+}
+
+// A project with no local checkout, listed by its repo (graded as "no local path", shown by the portfolio).
+async function addRemote(configFile, { id, priority, type, repo }) {
+  if (!id) return { error: "A project without a folder needs an --id" };
+  const config = await readJson(configFile);
+  if (config.projects.some((entry) => entry.id === id)) return { error: `${id} is already in the portfolio` };
+  const known = config.projects.find((entry) => entry.repo === repo);
+  if (known) return { error: `${known.id} already points there` };
+  const entry = { id, priority, ...(type ? { type } : {}), path: null, repo };
   const errors = validate({ projects: [entry] }, portfolioSchema);
   if (errors.length) return { error: errors.map((error) => error.replace(/^projects\[0\]\./, "")).join("; ") };
   config.projects.push(entry);

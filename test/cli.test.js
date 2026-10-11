@@ -86,6 +86,12 @@ test("add, list and remove edit the portfolio without the UI; collect finds it b
   assert.equal((await run("set", "local:p", "--config", config, "--priority", "urgent")).code, 2);
   assert.equal((await run("set", "local:p", "--config", config)).code, 2);
   await run("set", "local:p", "--config", config, "--priority", "high", "--type", "product");
+  const remote = await run("add", "--repo", "https://github.com/me/old", "--id", "github:me/old", "--priority", "low", "--config", config);
+  assert.match(remote.stdout, /Added github:me\/old/);
+  assert.equal((await run("add", "--repo", "https://github.com/me/old", "--id", "github:me/other", "--config", config)).code, 2);
+  assert.equal((await run("add", "--repo", "https://github.com/me/new", "--config", config)).code, 2);
+  assert.deepEqual(JSON.parse((await run("list", "--json", "--config", config)).stdout).at(-1), { id: "github:me/old", priority: "low", path: null, repo: "https://github.com/me/old" });
+  await run("remove", "github:me/old", "--config", config);
   const out = path.join(root, "site");
   await run("collect", "--config", config, "--out", out, "--offline");
   assert.equal(JSON.parse(await readFile(path.join(out, "feed.json"), "utf8")).projects[0].priority, "high");
