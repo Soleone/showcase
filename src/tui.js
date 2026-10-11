@@ -1,5 +1,6 @@
 import os from "node:os";
 import path from "node:path";
+import { targetTier } from "./collect.js";
 import { init } from "./init.js";
 import { addProject, createConfig, findConfig, fromText, gradeRow, loadEntries, manifestFields, moveProject, openRow, options, portfolioFields, removeProject, setManifestField, setPortfolioField, sortRows, sorts, stageOf, titleOf, toText, unregisteredHere } from "./manage.js";
 import { manifestName } from "./project.js";
@@ -359,12 +360,20 @@ function listScreen(state, configFile, width, height) {
   return { lines, cursor: null, footer: " ↑↓ select   enter open   s sort   a add   d remove   J/K reorder   r refresh   q quit" };
 }
 
+// The goal comes from the portfolio priority; a ceiling in showcase.json can only lower it, never raise it.
+function goalSource(priority, ceiling) {
+  const base = targetTier(priority);
+  const capped = ceiling && targetTier(priority, ceiling) !== base;
+  return capped ? `${priority} priority would aim for ${base}, capped by ceiling ${ceiling}` : `${priority} priority${ceiling ? `, ceiling ${ceiling} does not lower it` : ""}`;
+}
+
 function detailScreen(state, width, height) {
   const row = state.rows[state.cursor];
   const { report } = row;
   const lines = [` ${bold(titleOf(row))}  ${report ? `${tierLabel(report.tier)}${row.target ? ` → ${tierLabel(row.target)}` : ""}  ${dim(report.kind)}` : dim(row.grading ? "grading…" : "not graded")}`];
   lines.push(dim(` ${row.root ? home(row.root) : row.note ?? row.id}`));
   if (report) lines.push(row.gap.length ? ` ${yellow("gap")} ${row.gap.join(", ")}` : row.target ? ` ${green("on target")}` : dim(" no priority set, so no target"));
+  if (report && row.target) lines.push(dim(` goal ${row.target}: ${goalSource(row.entry.priority, report.ceiling)}`));
   else if (row.note) lines.push(` ${yellow(row.note)}`);
   const problems = row.project?.manifest?.errors ?? [];
   for (const problem of problems.slice(0, 3)) lines.push(` ${red("✗")} ${problem}`);

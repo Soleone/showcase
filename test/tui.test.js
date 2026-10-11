@@ -65,6 +65,21 @@ test("changing priority writes the config and moves the goal", async () => {
   assert.match(text(app), /\n D\s+S\s+high\s+-\s+plain/);
 });
 
+test("the project screen says where the goal comes from, and that a ceiling only lowers it", async () => {
+  const { app, configFile, manifestFile } = await setup();
+  await press(app, "\r");
+  assert.match(text(app), /goal S: high priority\n/);
+  await writeFile(manifestFile, JSON.stringify({ ...manifest, stage: "product", ceiling: "A" }));
+  await press(app, "\x1b", "r", "\r");
+  assert.match(text(app), /goal A: high priority would aim for S, capped by ceiling A/);
+  const config = await json(configFile);
+  config.projects[0].priority = "mid";
+  await writeFile(configFile, JSON.stringify(config));
+  await writeFile(manifestFile, JSON.stringify({ ...manifest, stage: "product", ceiling: "S" }));
+  await press(app, "\x1b", "r", "\r");
+  assert.match(text(app), /goal A: mid priority, ceiling S does not lower it/);
+});
+
 test("editing a showcase.json field saves it, and the schema rejects what it forbids", async () => {
   const { app, manifestFile } = await setup();
   await press(app, "\r");
