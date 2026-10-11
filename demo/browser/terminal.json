@@ -21,6 +21,7 @@
     "",
     "  showcase check projects/*            the tier of each one",
     "  showcase check projects/notecli      what notecli needs for A",
+    "  showcase manage                      browse and edit the portfolio of these four",
     "  showcase init projects/notecli --dry-run",
     "                                       draft its showcase.json",
     "",
@@ -30,6 +31,7 @@
     "showcase check projects/*",
     "showcase check projects/notecli",
     "showcase init projects/notecli --dry-run",
+    "showcase manage",
     "showcase check projects/* --matrix",
     "showcase --help"
   ]

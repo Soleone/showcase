@@ -1,0 +1,8 @@
+{
+  "projects": [
+    { "id": "local:beatbox", "priority": "high", "path": "projects/beatbox" },
+    { "id": "local:notecli", "priority": "mid", "path": "projects/notecli" },
+    { "id": "local:voice-notes", "priority": "low", "path": "projects/voice-notes" },
+    { "id": "local:old-library", "priority": null, "path": "projects/old-library" }
+  ]
+}

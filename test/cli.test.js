@@ -105,3 +105,9 @@ test("add, list and remove edit the portfolio without the UI; collect finds it b
   await run("remove", "local:p", "--config", config);
   assert.deepEqual(JSON.parse(await readFile(config, "utf8")).projects, []);
 });
+
+test("the browser demo ships a portfolio of its four sample projects", async () => {
+  const config = fileURLToPath(new URL("../demo/browser/home/portfolio.json", import.meta.url));
+  const listed = JSON.parse((await run("list", "--json", "--config", config)).stdout);
+  assert.deepEqual(listed.map((project) => project.path), ["projects/beatbox", "projects/notecli", "projects/voice-notes", "projects/old-library"]);
+});
