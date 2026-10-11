@@ -56,6 +56,12 @@ test("buildTerminal mounts the project and takes its facts from showcase.json", 
   assert.deepEqual(vercel.headers[0].headers.map((header) => header.key), ["Cross-Origin-Embedder-Policy", "Cross-Origin-Opener-Policy"]);
   assert.match(await readFile(path.join(out, "index.html"), "utf8"), /webcontainer/i);
   await readFile(path.join(out, "seed.js"));
+  const themes = await json(path.join(out, "themes.json"));
+  assert.equal(themes[0].name, "gilt");
+  for (const theme of themes) {
+    for (const key of ["label", "mode", "page", "terminal", "surface", "line", "ink", "inkStrong", "muted", "accent"]) assert.ok(theme[key], `${theme.name}.${key}`);
+    for (const key of ["red", "green", "yellow", "blue", "magenta", "cyan", "black", "white", "brightBlack", "brightWhite"]) assert.match(theme.ansi[key], /^#[0-9a-f]{6}$/, `${theme.name}.ansi.${key}`);
+  }
   await readFile(path.join(out, "fonts/JetBrainsMonoNerdFontMono-Regular.woff2"));
   await assert.rejects(readFile(path.join(out, "fonts/build.sh")));
 });

@@ -71,6 +71,7 @@ export async function buildTerminal(recipeDir, out) {
   }
   await mkdir(out, { recursive: true });
   await copyFile(path.join(assets, "index.html"), path.join(out, "index.html"));
+  await copyFile(path.join(assets, "themes.json"), path.join(out, "themes.json"));
   await cp(path.join(assets, "fonts"), path.join(out, "fonts"), { recursive: true, filter: (source) => !source.endsWith(".sh") });
   await writeFile(path.join(out, "files.json"), JSON.stringify(files));
   if (config.seed) await copyFile(path.join(recipeDir, config.seed), path.join(out, config.seed));

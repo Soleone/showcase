@@ -10,11 +10,20 @@
   <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.11.0/+esm" crossorigin>
   <link rel="preload" href="files.json" as="fetch" crossorigin>
   <link rel="preload" href="terminal.json" as="fetch" crossorigin>
+  <link rel="preload" href="themes.json" as="fetch" crossorigin>
   <link rel="preload" href="fonts/JetBrainsMonoNerdFontMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/JetBrainsMonoNerdFontMono-Bold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/css/xterm.css" crossorigin>
+  <script>
+    // Puts the visitor's theme on before first paint (themes.js saves the resolved colors when one is picked).
+    try {
+      const saved = JSON.parse(localStorage.getItem("browser-terminal.theme"));
+      for (const [name, value] of Object.entries(saved.vars)) document.documentElement.style.setProperty(`--${name}`, value);
+      document.documentElement.style.colorScheme = document.documentElement.dataset.theme = saved.mode;
+    } catch {}
+  </script>
   <style>
     /* JetBrains Mono with Nerd Font icons (SIL OFL, fonts/OFL.txt), self-hosted; see fonts/build.sh. */
     @font-face {
@@ -29,7 +38,7 @@
       font-weight: 700;
       font-display: block;
     }
-    /* The default theme: gold on cool obsidian, dark first. A recipe can override any variable with theme. */
+    /* The fallback look, gold on cool obsidian, until themes.json has applied a theme. */
     :root {
       color-scheme: dark;
       --page: #0D0F12;
@@ -78,7 +87,26 @@
     h1 { margin: 0; color: var(--ink-strong); font-size: clamp(28px, 5vw, 44px); font-weight: 600; line-height: 1.05; letter-spacing: -0.03em; }
     .pitch { margin: 8px 0 0; color: var(--muted); font-size: 17px; max-width: 62ch; text-wrap: pretty; }
     a { color: var(--accent); text-underline-offset: 3px; }
+    .tools { display: flex; align-items: center; gap: 16px; position: relative; }
     .repo { font-size: 15px; white-space: nowrap; }
+    #theme-button {
+      font: 13px/1 Geist, ui-sans-serif, system-ui, sans-serif;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface); color: var(--ink);
+      border: 1px solid var(--line); border-radius: 6px; padding: 8px 11px; cursor: pointer;
+    }
+    #theme-button:hover, #theme-button:focus-visible, #theme-button[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); outline: none; }
+    .swatch { display: inline-flex; border-radius: 99px; overflow: hidden; border: 1px solid var(--line); flex: none; }
+    .swatch i { width: 9px; height: 14px; display: block; }
+    #theme-list {
+      position: absolute; top: calc(100% + 8px); right: 0; z-index: 10; width: 240px; max-height: min(60vh, 420px); overflow: auto;
+      margin: 0; padding: 4px; list-style: none;
+      background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 12px 32px #0006;
+    }
+    #theme-list[hidden] { display: none; }
+    #theme-list li { display: flex; align-items: center; gap: 10px; padding: 7px 9px; border-radius: 5px; font-size: 14px; cursor: pointer; }
+    #theme-list li[aria-selected="true"] { color: var(--accent); }
+    #theme-list li.active { background: var(--line); }
     main { flex: 1; display: flex; flex-direction: column; gap: 12px; padding-top: 24px; padding-bottom: 16px; }
     .hints { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     .hints span { color: var(--muted); font-size: 14px; margin-right: 4px; }
@@ -121,7 +149,11 @@
       <h1 id="title">Loading…</h1>
       <p class="pitch" id="pitch"></p>
     </div>
-    <a class="repo" id="repo" hidden>Source on GitHub</a>
+    <div class="tools">
+      <a class="repo" id="repo" hidden>Source on GitHub</a>
+      <button id="theme-button" type="button" aria-haspopup="listbox" aria-expanded="false" hidden><span class="swatch" id="theme-swatch"></span><span id="theme-name"></span></button>
+      <ul id="theme-list" role="listbox" aria-label="Theme" tabindex="-1" hidden></ul>
+    </div>
   </header>
   <main>
     <div class="hints" id="hints"><span>Try</span></div>
@@ -141,6 +173,7 @@
     const booting = crossOriginIsolated ? WebContainer.boot({ workdirName: "demo" }) : null;
     const filesLoad = fetch("files.json").then((response) => response.json()).then(decode);
     const configLoad = fetch("terminal.json").then((response) => response.json());
+    const themesLoad = fetch("themes.json").then((response) => response.json()).catch(() => []);
     const terminalCode = Promise.all([
       import("https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/+esm"),
       import("https://cdn.jsdelivr.net/npm/@xterm/addon-webgl@0.19.0/+esm"),
@@ -160,26 +193,39 @@
     document.getElementById("pitch").textContent = config.pitch ?? "";
     if (config.repo) Object.assign(document.getElementById("repo"), { href: config.repo, hidden: false });
     if (config.disclosure) document.getElementById("disclosure").textContent = config.disclosure;
-    for (const [name, value] of Object.entries(config.theme ?? {})) document.documentElement.style.setProperty(`--${name}`, value);
+    const themes = await themesLoad;
+    const storeKey = "browser-terminal.theme";
+    const stored = (() => { try { return JSON.parse(localStorage.getItem(storeKey))?.name; } catch { return undefined; } })();
+    const pick = (name) => themes.find((theme) => theme.name === name);
+    let current = pick(stored) ?? pick(config.defaultTheme) ?? themes[0];
+    // Bright ANSI colors are the normal ones lifted a quarter of the way toward the theme's brightest ink.
+    const lift = (color, toward) => `#${[1, 3, 5].map((at) => Math.round(parseInt(color.slice(at, at + 2), 16) * 0.75 + parseInt(toward.slice(at, at + 2), 16) * 0.25).toString(16).padStart(2, "0")).join("")}`;
+    const terminalColors = ({ terminal, ink, inkStrong, accent, line, ansi }) => ({
+      background: terminal, foreground: ink, cursor: accent, cursorAccent: terminal, selectionBackground: line, selectionForeground: inkStrong,
+      black: ansi.black, red: ansi.red, green: ansi.green, yellow: ansi.yellow, blue: ansi.blue, magenta: ansi.magenta, cyan: ansi.cyan, white: ansi.white,
+      brightBlack: ansi.brightBlack, brightRed: lift(ansi.red, inkStrong), brightGreen: lift(ansi.green, inkStrong), brightYellow: lift(ansi.yellow, inkStrong),
+      brightBlue: lift(ansi.blue, inkStrong), brightMagenta: lift(ansi.magenta, inkStrong), brightCyan: lift(ansi.cyan, inkStrong), brightWhite: ansi.brightWhite,
+    });
+    let term;
+    // Page and terminal change together; xterm maps its palette onto whatever the programs print.
+    function apply(theme, save) {
+      const vars = { page: theme.page, ink: theme.ink, "ink-strong": theme.inkStrong, muted: theme.muted, accent: theme.accent, surface: theme.surface, line: theme.line, terminal: theme.terminal };
+      for (const [name, value] of Object.entries(vars)) document.documentElement.style.setProperty(`--${name}`, value);
+      document.documentElement.style.colorScheme = document.documentElement.dataset.theme = theme.mode;
+      if (term) term.options.theme = terminalColors(theme);
+      if (save) try { localStorage.setItem(storeKey, JSON.stringify({ name: theme.name, mode: theme.mode, vars })); } catch {}
+    }
+    if (current) apply(current);
 
-    // The default ANSI palette, to match the page; a recipe can override any key with terminalTheme.
-    const defaultTerminalTheme = {
-      background: "#090A0C", foreground: "#D8D1C0", cursor: "#D4AF37", cursorAccent: "#090A0C",
-      selectionBackground: "#342D1B", selectionForeground: "#F5EBD2",
-      black: "#181B20", red: "#BC6060", green: "#7FA37A", yellow: "#D4AF37",
-      blue: "#6F8FAF", magenta: "#9A7AA0", cyan: "#72A5A4", white: "#D8D1C0",
-      brightBlack: "#716957", brightRed: "#D47474", brightGreen: "#9DBB8E", brightYellow: "#E7C968",
-      brightBlue: "#8FAECC", brightMagenta: "#B596B8", brightCyan: "#91C0BD", brightWhite: "#F5EBD2",
-    };
     const [[{ Terminal }, { WebglAddon }, { FitAddon }]] = await Promise.all([terminalCode, fontLoad]);
-    const term = new Terminal({
+    term = new Terminal({
       cursorBlink: true,
       convertEol: true,
       fontFamily: `${mono}, ui-monospace, Menlo, Consolas, monospace`,
       fontSize: 14,
       lineHeight: 1.25,
       scrollback: 5000,
-      theme: { ...defaultTerminalTheme, ...config.terminalTheme },
+      theme: current ? terminalColors(current) : undefined,
     });
     const fit = new FitAddon();
     term.loadAddon(fit);
@@ -195,6 +241,61 @@
     }
     fit.fit();
     mark("terminal");
+    // The theme picker: arrows preview a theme in the page and the terminal, Enter keeps it, Esc puts the old one back.
+    if (themes.length > 1) {
+      const button = document.getElementById("theme-button");
+      const list = document.getElementById("theme-list");
+      const swatch = (theme) => [theme.page, theme.accent, theme.ink].map((color) => `<i style="background:${color}"></i>`).join("");
+      const rows = themes.map((theme) => {
+        const row = Object.assign(document.createElement("li"), { role: "option", innerHTML: `<span class="swatch">${swatch(theme)}</span><span>${theme.label}</span>` });
+        row.dataset.name = theme.name;
+        list.append(row);
+        return row;
+      });
+      let chosen = current;
+      let cursor = 0;
+      const show = () => {
+        document.getElementById("theme-swatch").innerHTML = swatch(current);
+        document.getElementById("theme-name").textContent = current.label;
+        rows.forEach((row) => row.setAttribute("aria-selected", String(row.dataset.name === current.name)));
+      };
+      const open = (isOpen) => {
+        list.hidden = !isOpen;
+        button.setAttribute("aria-expanded", String(isOpen));
+        if (isOpen) { chosen = current; move(themes.indexOf(current)); list.focus(); }
+      };
+      const move = (index) => {
+        cursor = (index + themes.length) % themes.length;
+        rows.forEach((row, i) => row.classList.toggle("active", i === cursor));
+        rows[cursor].scrollIntoView({ block: "nearest" });
+        current = themes[cursor];
+        apply(current);
+        show();
+      };
+      const close = (keep) => {
+        if (keep) apply(current, true); else { current = chosen; apply(current); }
+        show();
+        open(false);
+        button.focus();
+      };
+      button.hidden = false;
+      show();
+      button.addEventListener("click", () => open(list.hidden));
+      list.addEventListener("click", (event) => {
+        const row = event.target.closest("li");
+        if (row) { current = pick(row.dataset.name); close(true); }
+      });
+      list.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowDown") move(cursor + 1);
+        else if (event.key === "ArrowUp") move(cursor - 1);
+        else if (event.key === "Enter") close(true);
+        else if (event.key === "Escape" || event.key === "Tab") close(false);
+        else return;
+        event.preventDefault();
+      });
+      document.addEventListener("click", (event) => { if (!list.hidden && !event.target.closest(".tools")) close(false); });
+    }
+
     // For automated checks: the terminal text.
     window.terminalText = () => {
       const buffer = term.buffer.active;
