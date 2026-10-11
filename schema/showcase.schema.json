@@ -4,7 +4,7 @@
   "title": "showcase.json",
   "description": "Facts about one project that a portfolio can show. Importance and ordering belong to the portfolio, not here.",
   "type": "object",
-  "required": ["title", "pitch", "kind"],
+  "required": ["title", "pitch", "description", "kind"],
   "additionalProperties": false,
   "patternProperties": {
     "^x-": {}
@@ -16,7 +16,13 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 160,
-      "description": "One sentence that makes someone want to click."
+      "description": "One sentence that makes someone want to click. A subtitle: short enough to sit under a title."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "description": "A couple of sentences that go further than the pitch (how it works, what makes it different). Never restates the pitch; a portfolio shows the two together."
     },
     "kind": {
       "enum": ["web-app", "local-web-app", "cli", "library", "browser-extension", "desktop-app", "agent-extension", "game", "service", "other"],

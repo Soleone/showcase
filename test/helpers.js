@@ -47,6 +47,7 @@ export const polishedFiles = {
 export const manifest = {
   title: "Demo",
   pitch: "Turns notes into a journal.",
+  description: "Reads your session logs, groups them by day and writes a Markdown file per day.",
   kind: "cli",
   media: { hero: "docs/hero.png", motion: "docs/loop.webp" },
   demo: { local: "npm run demo" },

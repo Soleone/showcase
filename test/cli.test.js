@@ -69,5 +69,6 @@ test("init shortens a long lead to its first sentence", async () => {
   const root = await fixture({ "README.md": `# Demo\n\n${lead}\n` });
   const { stdout } = await run("init", root, "--dry-run");
   assert.match(stdout, /^Draft for /);
-  assert.equal(JSON.parse(stdout.slice(stdout.indexOf("{"))).pitch, "Demo is a tool.");
+  assert.equal(JSON.parse(stdout.slice(stdout.indexOf("{"), stdout.indexOf("\n}") + 2)).pitch, "Demo is a tool.");
+  assert.match(stdout, /description: required/);
 });

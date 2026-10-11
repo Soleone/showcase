@@ -28,7 +28,7 @@ If a tier is out of reach (nothing can be hosted, for example), set `ceiling` in
 
 ## Taste
 
-**Pitch.** One or two sentences under the H1 that say what someone can do with it, in plain words. Lead with the outcome, not the stack. Write two or three options when the project's purpose is unclear and let the person pick. Never claim what the project does not do.
+**Pitch.** One or two sentences under the H1 that say what someone can do with it, in plain words. Lead with the outcome, not the stack. Write two or three options when the project's purpose is unclear and let the person pick. Never claim what the project does not do. In showcase.json, `pitch` is one sentence. If a portfolio card needs more, write a `description` (required, up to 240 characters) that adds how it works or what sets it apart, and never restates the pitch.
 
 **Visuals are real.** The hero and the loop show the project actually running: a screenshot or a recording. Never draw a mockup, concept art or an "illustrative" image to pass a check; a portfolio visitor takes it as the real thing. If you cannot run the project here, leave that check failing and say what the person needs to capture.
 

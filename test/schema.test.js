@@ -3,12 +3,13 @@ import test from "node:test";
 import { validate } from "../src/schema.js";
 
 test("accepts a minimal manifest", () => {
-  assert.deepEqual(validate({ title: "Demo", pitch: "Does a thing.", kind: "cli" }), []);
+  assert.deepEqual(validate({ title: "Demo", pitch: "Does a thing.", description: "Does it well.", kind: "cli" }), []);
 });
 
 test("reports missing, unknown and malformed fields", () => {
   const errors = validate({ title: "", kind: "spaceship", live: "ftp://example.com", year: 1800, media: { hero: "a.png", gif: "b.gif" } });
   assert.deepEqual(errors.sort(), [
+    "description: required",
     "kind: must be one of web-app, local-web-app, cli, library, browser-extension, desktop-app, agent-extension, game, service, other",
     "live: must be an http(s) URL",
     "media.gif: unknown field",
@@ -18,12 +19,20 @@ test("reports missing, unknown and malformed fields", () => {
   ]);
 });
 
+test("description is required and capped", () => {
+  const base = { title: "Demo", pitch: "Does a thing.", kind: "cli" };
+  assert.deepEqual(validate(base), ["description: required"]);
+  assert.deepEqual(validate({ ...base, description: "Goes further than the pitch." }), []);
+  assert.deepEqual(validate({ ...base, description: "x".repeat(241) }), ["description: 241 characters, max 240"]);
+  assert.deepEqual(validate({ ...base, description: "" }), ["description: must not be empty"]);
+});
+
 test("allows x- extension fields", () => {
-  assert.deepEqual(validate({ title: "Demo", pitch: "Does a thing.", kind: "cli", "x-portfolio": { anything: true } }), []);
+  assert.deepEqual(validate({ title: "Demo", pitch: "Does a thing.", description: "Does it well.", kind: "cli", "x-portfolio": { anything: true } }), []);
 });
 
 test("checks array items", () => {
-  assert.deepEqual(validate({ title: "Demo", pitch: "Does a thing.", kind: "cli", tech: ["Node", 3] }), ["tech[1]: expected string"]);
+  assert.deepEqual(validate({ title: "Demo", pitch: "Does a thing.", description: "Does it well.", kind: "cli", tech: ["Node", 3] }), ["tech[1]: expected string"]);
 });
 
 test("supports nullable types for the portfolio config", async () => {
@@ -33,7 +42,7 @@ test("supports nullable types for the portfolio config", async () => {
 });
 
 test("demo.externals needs a seam and a stand-in for each external", () => {
-  const manifest = (externals) => ({ title: "Demo", pitch: "Does a thing.", kind: "cli", demo: { externals } });
+  const manifest = (externals) => ({ title: "Demo", pitch: "Does a thing.", description: "Does it well.", kind: "cli", demo: { externals } });
   assert.deepEqual(validate(manifest([{ name: "LLM", type: "model", seam: "piCommand", standIn: "canned" }])), []);
   assert.deepEqual(validate(manifest([])), []);
   assert.deepEqual(validate(manifest([{ name: "LLM", type: "model", standIn: "magic" }])).sort(), [

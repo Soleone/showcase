@@ -6,6 +6,7 @@ What worked, and what cost time, taking a CLI and a browser game from B to S. Re
 
 1. **Pitch and hero (B).** One or two sentences under the H1 that say what you can do with it, then a screenshot or loop above the first `##`.
 2. **`showcase.json` (A, S).** Start from `showcase init <path> --dry-run`, then fix by hand:
+   - `pitch` stays one sentence. The required `description` (up to 240 characters) adds how it works or what sets it apart, without restating the pitch.
    - `kind` describes what visitors get, not the stack. A web app with an optional desktop companion is still `web-app` if the hosted site is the product.
    - `live` is read from showcase.json only. A site that is up still fails the `live` check until showcase.json says where it is.
    - `demo.externals`: list everything the demo cannot reach and its stand-in, even when the answer is `bring-your-own` (an optional companion app, a user's own account).

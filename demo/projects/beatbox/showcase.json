@@ -1,6 +1,7 @@
 {
   "title": "beatbox",
   "pitch": "Tap out a rhythm and turn it into a loop you can layer and share.",
+  "description": "Pick a drum or synth for each pad, record taps against a metronome and stack up to eight loops. Share a link that replays your track.",
   "kind": "web-app",
   "year": 2026,
   "tech": ["TypeScript", "Web Audio"],

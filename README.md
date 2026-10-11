@@ -54,6 +54,7 @@ The project's facts for any portfolio to use. How much a portfolio cares about t
   "$schema": "https://raw.githubusercontent.com/Soleone/showcase/main/schema/showcase.schema.json",
   "title": "notecli",
   "pitch": "Turns a folder of session logs into a daily journal you can read.",
+  "description": "Reads the session logs your coding agent already saves, groups them by day and writes a Markdown journal. Your handwritten notes are never touched.",
   "kind": "cli",
   "year": 2026,
   "tech": ["Node.js"],
@@ -75,6 +76,8 @@ The project's facts for any portfolio to use. How much a portfolio cares about t
   }
 }
 ```
+
+`pitch` is the one-sentence subtitle. `description` goes further (how it works, what sets it apart) without repeating the pitch, so a portfolio can show both, for example a card with the pitch on its front and the description on its back.
 
 `demo.externals` makes explicit what the project needs that a demo cannot reach (a model, an account, hardware, a service, another app), where a stand-in plugs in without changing the code (`seam`), and which stand-in the demo uses: `canned`, `replay`, `simulated`, `bring-your-own`, `real` or `omitted`. `[]` says there are none. Demo pages use each `note` to tell visitors what is not real.
 
