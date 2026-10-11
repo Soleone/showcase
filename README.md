@@ -115,7 +115,8 @@ No setup. It opens, in this order: the path you pass (for this run only), `$SHOW
 It is a full-screen list of every project with its tier, the goal its priority sets and what is still missing (`--offline` skips the live URL request). Keys:
 
 - `enter` opens a project, where `enter` edits a text field, `←` `→` change a choice, and `n` drafts a missing showcase.json from the README.
-- `a` adds a project by path, `d` removes one from the portfolio (its files stay), `J` `K` change the order.
+- `s` cycles the sort: priority then tier (the start), tier, gap to the goal, or the order in portfolio.json. Sorting is only a view and the selection stays on the same project.
+- `a` adds a project by path, `d` removes one from the portfolio (its files stay), `J` `K` change the order in portfolio.json (switch to that sort first).
 - `r` refreshes, `q` quits.
 
 Fields come from the two schemas, so the limits you see while typing (`n/160`) are the validator's. Every edit is written right away and changes only that value, so the diff is one line: the config for priority and path (plus title and repo, but only for a project without a showcase.json, whose own facts always win), the project's own showcase.json for its facts. Nested `media` and `demo` stay hand-edited.

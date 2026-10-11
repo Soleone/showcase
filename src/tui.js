@@ -1,7 +1,7 @@
 import os from "node:os";
 import path from "node:path";
 import { init } from "./init.js";
-import { addProject, createConfig, findConfig, fromText, gradeRow, loadEntries, manifestFields, moveProject, openRow, options, portfolioFields, removeProject, setManifestField, setPortfolioField, stageOf, titleOf, toText, unregisteredHere } from "./manage.js";
+import { addProject, createConfig, findConfig, fromText, gradeRow, loadEntries, manifestFields, moveProject, openRow, options, portfolioFields, removeProject, setManifestField, setPortfolioField, sortRows, sorts, stageOf, titleOf, toText, unregisteredHere } from "./manage.js";
 import { manifestName } from "./project.js";
 import { bold, dim, green, muted, paint, red, tierLabel, yellow } from "./report.js";
 
@@ -56,7 +56,7 @@ function items(row) {
 }
 
 export function createApp({ configFile, cwd = process.cwd(), notice = null, offline = false, env = process.env, fetch = globalThis.fetch, onChange = () => {} } = {}) {
-  const state = { rows: [], screen: "list", cursor: 0, field: 0, edit: null, confirm: null, status: notice ? { text: notice, kind: "ok" } : null, base: null };
+  const state = { rows: [], screen: "list", cursor: 0, field: 0, edit: null, confirm: null, status: notice ? { text: notice, kind: "ok" } : null, base: null, sort: "priority", order: [] };
   const pending = new Set();
 
   const flash = (text, kind = "info") => { state.status = { text, kind }; };
@@ -65,9 +65,16 @@ export function createApp({ configFile, cwd = process.cwd(), notice = null, offl
     pending.add(tracked);
     return tracked;
   };
+  // Puts the rows in the chosen order and keeps the cursor on the same project, wherever it lands.
+  const resort = (id = state.rows[state.cursor]?.id) => {
+    state.rows = sortRows(state.rows, state.sort, state.order);
+    state.cursor = Math.max(state.rows.findIndex((row) => row.id === id), 0);
+  };
   const replaceRow = (row) => {
     const index = state.rows.findIndex((existing) => existing.id === row.id);
-    if (index >= 0) state.rows[index] = row;
+    if (index < 0) return;
+    state.rows[index] = row;
+    resort();
   };
 
   // Grades in the background; the list shows "grading" until the report arrives.
@@ -76,8 +83,11 @@ export function createApp({ configFile, cwd = process.cwd(), notice = null, offl
   // Lists the projects at once, then opens and grades each in the background.
   async function load() {
     const { base, entries } = await loadEntries(configFile);
+    const selected = state.rows[state.cursor]?.id;
     state.base = base;
+    state.order = entries.map((entry) => entry.id);
     state.rows = entries.map((entry) => ({ id: entry.id, entry, gap: [], target: null, grading: false, note: "loading" }));
+    resort(selected);
     onChange();
     for (const entry of entries) {
       track((async () => {
@@ -243,11 +253,19 @@ export function createApp({ configFile, cwd = process.cwd(), notice = null, offl
         if (!state.rows.length) return;
         state.screen = "detail"; state.field = 0; state.status = null;
         return;
+      case "s": {
+        const modes = Object.keys(sorts);
+        state.sort = modes[(modes.indexOf(state.sort) + 1) % modes.length];
+        resort();
+        return flash(`Sorted by ${sorts[state.sort]}`, "ok");
+      }
       case "J": case "K": {
+        if (state.sort !== "order") return flash("Press s until it says portfolio.json order, then reorder", "error");
         const delta = key.text === "J" ? 1 : -1;
         const row = current();
         if (!(await moveProject(configFile, row.id, delta))) return;
         state.rows.splice(state.cursor + delta, 0, state.rows.splice(state.cursor, 1)[0]);
+        state.order = state.rows.map((existing) => existing.id);
         state.cursor += delta;
         return flash(`Moved ${titleOf(row)} to position ${state.cursor + 1}`, "ok");
       }
@@ -317,7 +335,7 @@ function listScreen(state, configFile, width, height) {
     name: Math.min(Math.max(...rows.map((row) => titleOf(row).length), 7), 28),
     kind: Math.max(...rows.map((row) => (row.report?.kind ?? "").length), 4),
   };
-  const lines = [` ${bold("showcase")}  ${dim(`${home(configFile)} · ${rows.length} project${rows.length === 1 ? "" : "s"}`)}`, ""];
+  const lines = [` ${bold("showcase")}  ${dim(`${home(configFile)} · ${rows.length} project${rows.length === 1 ? "" : "s"} · by ${sorts[state.sort]}`)}`, ""];
   lines.push(dim(` ${fit("TIER", 5)}${fit("GOAL", 5)}${fit("PRIO", widths.pri + 2)}${fit("STAGE", widths.stage + 2)}${fit("PROJECT", widths.name + 2)}${fit("KIND", widths.kind + 2)}GAP`));
 
   const room = Math.max(height - lines.length - 3, 1);
@@ -336,7 +354,7 @@ function listScreen(state, configFile, width, height) {
     lines.push(` ${tier}${" ".repeat(4)}${cell(row.target ?? "-", 5, row.target ? (value) => value : dim)}${cell(row.entry.priority ?? "-", widths.pri + 2, row.entry.priority ? (value) => value : dim)}${cell(stageOf(row) ?? "-", widths.stage + 2, stageOf(row) ? (value) => value : dim)}${cell(titleOf(row), widths.name + 2, bold)}${cell(report?.kind ?? "", widths.kind + 2, dim)}${gapStyle(gap)}`);
   });
   if (first + room < rows.length) lines.push(dim(` ↓ ${rows.length - first - room} more`));
-  return { lines, cursor: null, footer: " ↑↓ select   enter open   a add   d remove   J/K reorder   r refresh   q quit" };
+  return { lines, cursor: null, footer: " ↑↓ select   enter open   s sort   a add   d remove   J/K reorder   r refresh   q quit" };
 }
 
 function detailScreen(state, width, height) {

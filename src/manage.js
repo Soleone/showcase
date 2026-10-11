@@ -3,7 +3,7 @@ import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
-import { evaluate } from "./checks.js";
+import { evaluate, tiers } from "./checks.js";
 import { gapTo, loadPortfolio, resolvePath, targetTier } from "./collect.js";
 import { exists, loadProject, manifestName } from "./project.js";
 import { portfolioSchema, schema, validate } from "./schema.js";
@@ -192,6 +192,27 @@ export async function loadEntries(configFile) {
   const config = await loadPortfolio(configFile);
   const base = path.dirname(path.resolve(configFile));
   return { base, entries: config.projects };
+}
+
+// The ways the list can be ordered. "order" is portfolio.json itself, the only one J/K can change.
+export const sorts = {
+  priority: "priority, then tier",
+  tier: "tier, best first",
+  gap: "gap to target, biggest first",
+  order: "portfolio.json order",
+};
+
+// Sorts rows for display without touching the portfolio. Ties keep portfolio order; ungraded rows come last.
+export function sortRows(rows, mode, order = rows.map((row) => row.id)) {
+  const position = (row) => { const at = order.indexOf(row.id); return at < 0 ? order.length : at; };
+  const priority = (row) => ["high", "mid", "low"].indexOf(row.entry.priority) < 0 ? 3 : ["high", "mid", "low"].indexOf(row.entry.priority);
+  const tier = (row) => row.report ? tiers.indexOf(row.report.tier) : -1;
+  const gap = (row) => row.report && row.target ? tiers.indexOf(row.target) - tiers.indexOf(row.report.tier) : -1;
+  const keys = { priority: [priority, (row) => -tier(row)], tier: [(row) => -tier(row), priority], gap: [(row) => -gap(row), (row) => -tier(row)], order: [] }[mode] ?? [];
+  return [...rows].sort((a, b) => {
+    for (const key of keys) if (key(a) !== key(b)) return key(a) - key(b);
+    return position(a) - position(b);
+  });
 }
 
 // How far along a project is, as its showcase.json says.

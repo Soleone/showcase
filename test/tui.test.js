@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
-import { createConfig, findConfig } from "../src/manage.js";
+import { createConfig, findConfig, sortRows } from "../src/manage.js";
 import { createApp, parseKeys, wrap } from "../src/tui.js";
 import { fixture, manifest, polishedFiles } from "./helpers.js";
 
@@ -97,6 +97,10 @@ test("clearing a required field is refused and an optional list round-trips", as
 
 test("J and K reorder the portfolio on disk", async () => {
   const { app, configFile } = await setup();
+  await press(app, "J");
+  assert.match(text(app), /Press s until it says portfolio.json order/);
+  await press(app, "s", "s", "s");
+  assert.match(text(app), /by portfolio.json order/);
   await press(app, "J");
   assert.deepEqual((await json(configFile)).projects.map((entry) => entry.id), ["local:plain", "local:demo", "github:me/remote"]);
   assert.equal(app.state.cursor, 1);
@@ -278,4 +282,28 @@ test("stage is a choice in showcase.json, cycled like priority", async () => {
   assert.equal((await json(manifestFile)).stage, "prototype");
   await press(app, "\x1b[C", "\x1b[C");
   assert.equal((await json(manifestFile)).stage, undefined, "past the last choice it is unset again");
+});
+
+test("sorting is only a view: it never changes the portfolio and the cursor follows the project", () => {
+  const row = (id, priority, tier, target) => ({ id, entry: { id, priority }, report: tier && { tier }, target });
+  const rows = [row("low-b", "low", "B", "C"), row("none-s", null, "S", null), row("high-d", "high", "D", "S"), row("mid-a", "mid", "A", "S"), row("remote", null, null, null)];
+  const ids = (mode) => sortRows(rows, mode).map((r) => r.id);
+  assert.deepEqual(ids("priority"), ["high-d", "mid-a", "low-b", "none-s", "remote"]);
+  assert.deepEqual(ids("tier"), ["none-s", "mid-a", "low-b", "high-d", "remote"]);
+  assert.deepEqual(ids("gap"), ["high-d", "mid-a", "none-s", "low-b", "remote"]);
+  assert.deepEqual(ids("order"), rows.map((r) => r.id));
+  assert.deepEqual(rows.map((r) => r.id), ["low-b", "none-s", "high-d", "mid-a", "remote"]);
+});
+
+test("s cycles the sort and the selected project stays selected", async () => {
+  const { app, configFile } = await setup();
+  const before = JSON.stringify(await json(configFile));
+  await press(app, "j");
+  assert.equal(app.state.rows[app.state.cursor].id, "local:plain");
+  await press(app, "s");
+  assert.match(text(app), /by tier, best first/);
+  assert.equal(app.state.rows[app.state.cursor].id, "local:plain");
+  await press(app, "s");
+  assert.match(text(app), /by gap to target, biggest first/);
+  assert.equal(JSON.stringify(await json(configFile)), before);
 });
