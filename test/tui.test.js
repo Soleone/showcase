@@ -23,7 +23,7 @@ async function setup() {
   const configFile = path.join(root, "portfolio.json");
   await writeFile(configFile, JSON.stringify({
     projects: [
-      { id: "local:demo", priority: "high", type: "product", path: "demo" },
+      { id: "local:demo", priority: "high", stage: "product", path: "demo" },
       { id: "local:plain", priority: null, path: "plain" },
       { id: "github:me/remote", title: "remote", path: null },
     ],
@@ -50,7 +50,7 @@ test("wrap breaks after a space and covers every character", () => {
 test("the list shows every project with its tier, goal and gap", async () => {
   const { app } = await setup();
   const screen = text(app);
-  assert.match(screen, /TIER\s+GOAL\s+PRIO\s+TYPE\s+PROJECT\s+KIND\s+GAP/);
+  assert.match(screen, /TIER\s+GOAL\s+PRIO\s+STAGE\s+PROJECT\s+KIND\s+GAP/);
   assert.match(screen, /\n A\s+S\s+high\s+product\s+Demo\s+cli\s+live/);
   assert.match(screen, /\n D\s+-\s+-\s+-\s+plain\s+other\s+next C: readme.substance/);
   assert.match(screen, /\n -\s+-\s+-\s+-\s+remote\s+no local path/);

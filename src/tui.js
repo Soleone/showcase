@@ -310,12 +310,12 @@ function listScreen(state, configFile, width, height) {
   const { rows } = state;
   const widths = {
     pri: Math.max(...rows.map((row) => (row.entry.priority ?? "-").length), 3),
-    type: Math.max(...rows.map((row) => (row.entry.type ?? "-").length), 4),
+    stage: Math.max(...rows.map((row) => (row.entry.stage ?? "-").length), 5),
     name: Math.min(Math.max(...rows.map((row) => titleOf(row).length), 7), 28),
     kind: Math.max(...rows.map((row) => (row.report?.kind ?? "").length), 4),
   };
   const lines = [` ${bold("showcase")}  ${dim(`${home(configFile)} · ${rows.length} project${rows.length === 1 ? "" : "s"}`)}`, ""];
-  lines.push(dim(` ${fit("TIER", 5)}${fit("GOAL", 5)}${fit("PRIO", widths.pri + 2)}${fit("TYPE", widths.type + 2)}${fit("PROJECT", widths.name + 2)}${fit("KIND", widths.kind + 2)}GAP`));
+  lines.push(dim(` ${fit("TIER", 5)}${fit("GOAL", 5)}${fit("PRIO", widths.pri + 2)}${fit("STAGE", widths.stage + 2)}${fit("PROJECT", widths.name + 2)}${fit("KIND", widths.kind + 2)}GAP`));
 
   const room = Math.max(height - lines.length - 3, 1);
   const first = Math.min(Math.max(state.cursor - room + 1, 0), Math.max(rows.length - room, 0));
@@ -326,11 +326,11 @@ function listScreen(state, configFile, width, height) {
     const gap = report ? (row.gap.length ? row.gap.join(", ") : row.target ? "on target" : nextNeeds(report)) : (row.grading ? "grading" : row.note ?? "");
     const plain = [
       fit(report ? report.tier : row.grading ? "…" : "-", 5), fit(row.target ?? "-", 5), fit(row.entry.priority ?? "-", widths.pri + 2),
-      fit(row.entry.type ?? "-", widths.type + 2), fit(titleOf(row), widths.name + 2), fit(report?.kind ?? "", widths.kind + 2), gap,
+      fit(row.entry.stage ?? "-", widths.stage + 2), fit(titleOf(row), widths.name + 2), fit(report?.kind ?? "", widths.kind + 2), gap,
     ].join("");
     if (selected) return lines.push(inverse(fit(` ${plain}`, width)));
     const gapStyle = report && !row.gap.length ? green : row.gap.length ? yellow : dim;
-    lines.push(` ${tier}${" ".repeat(4)}${cell(row.target ?? "-", 5, row.target ? (value) => value : dim)}${cell(row.entry.priority ?? "-", widths.pri + 2, row.entry.priority ? (value) => value : dim)}${cell(row.entry.type ?? "-", widths.type + 2, row.entry.type ? (value) => value : dim)}${cell(titleOf(row), widths.name + 2, bold)}${cell(report?.kind ?? "", widths.kind + 2, dim)}${gapStyle(gap)}`);
+    lines.push(` ${tier}${" ".repeat(4)}${cell(row.target ?? "-", 5, row.target ? (value) => value : dim)}${cell(row.entry.priority ?? "-", widths.pri + 2, row.entry.priority ? (value) => value : dim)}${cell(row.entry.stage ?? "-", widths.stage + 2, row.entry.stage ? (value) => value : dim)}${cell(titleOf(row), widths.name + 2, bold)}${cell(report?.kind ?? "", widths.kind + 2, dim)}${gapStyle(gap)}`);
   });
   if (first + room < rows.length) lines.push(dim(` ↓ ${rows.length - first - room} more`));
   return { lines, cursor: null, footer: " ↑↓ select   enter open   a add   d remove   J/K reorder   r refresh   q quit" };

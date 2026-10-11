@@ -81,7 +81,7 @@ async function copyMedia(project, media, out, slug, warn) {
 async function collectOne(entry, base, out, options) {
   const warnings = [];
   const warn = (message) => warnings.push(`${entry.id}: ${message}`);
-  const listing = { id: entry.id, priority: entry.priority ?? null, type: entry.type ?? null };
+  const listing = { id: entry.id, priority: entry.priority ?? null, stage: entry.stage ?? null };
   const slug = slugOf(entry.id);
   let root;
   try {

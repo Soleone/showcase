@@ -76,16 +76,16 @@ test("init shortens a long lead to its first sentence", async () => {
 test("add, list and remove edit the portfolio without the UI; collect finds it by itself", async () => {
   const root = await fixture({ "proj/README.md": "# Proj\n", "portfolio.json": { projects: [] } });
   const config = path.join(root, "portfolio.json");
-  const added = await run("add", path.join(root, "proj"), "--config", config, "--priority", "high", "--type", "product", "--id", "local:p");
+  const added = await run("add", path.join(root, "proj"), "--config", config, "--priority", "high", "--stage", "product", "--id", "local:p");
   assert.match(added.stdout, /Added local:p/);
   assert.equal((await run("add", path.join(root, "proj"), "--config", config)).code, 2);
   assert.equal((await run("add", root, "--config", config, "--priority", "urgent")).code, 2);
-  assert.deepEqual(JSON.parse((await run("list", "--json", "--config", config)).stdout).map((p) => [p.id, p.priority, p.type]), [["local:p", "high", "product"]]);
+  assert.deepEqual(JSON.parse((await run("list", "--json", "--config", config)).stdout).map((p) => [p.id, p.priority, p.stage]), [["local:p", "high", "product"]]);
   assert.match((await run("list", "--config", config)).stdout, /^local:p\s+high\s+/);
-  assert.match((await run("set", "local:p", "--config", config, "--priority", "low", "--type", "prototype")).stdout, /Updated local:p/);
+  assert.match((await run("set", "local:p", "--config", config, "--priority", "low", "--stage", "prototype")).stdout, /Updated local:p/);
   assert.equal((await run("set", "local:p", "--config", config, "--priority", "urgent")).code, 2);
   assert.equal((await run("set", "local:p", "--config", config)).code, 2);
-  await run("set", "local:p", "--config", config, "--priority", "high", "--type", "product");
+  await run("set", "local:p", "--config", config, "--priority", "high", "--stage", "product");
   const remote = await run("add", "--repo", "https://github.com/me/old", "--id", "github:me/old", "--priority", "low", "--config", config);
   assert.match(remote.stdout, /Added github:me\/old/);
   assert.equal((await run("add", "--repo", "https://github.com/me/old", "--id", "github:me/other", "--config", config)).code, 2);

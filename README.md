@@ -91,7 +91,7 @@ A portfolio picks its projects in `portfolio.json`, in the order it shows them (
 ```json
 {
   "projects": [
-    { "id": "local:notecli", "priority": "high", "type": "product", "path": "$HOME/code/notecli" },
+    { "id": "local:notecli", "priority": "high", "stage": "product", "path": "$HOME/code/notecli" },
     { "id": "github:you/old-library", "title": "old-library", "priority": "low", "repo": "https://github.com/you/old-library" }
   ]
 }
@@ -117,13 +117,13 @@ It is a full-screen list of every project with its tier, the goal its priority s
 - `a` adds a project by path, `d` removes one from the portfolio (its files stay), `J` `K` change the order.
 - `r` refreshes, `q` quits.
 
-Fields come from the two schemas, so the limits you see while typing (`n/160`) are the validator's. Every edit is written right away and changes only that value, so the diff is one line: the config for priority, type and the fallback fields, the project's own showcase.json for its facts. Nested `media` and `demo` stay hand-edited.
+Fields come from the two schemas, so the limits you see while typing (`n/160`) are the validator's. Every edit is written right away and changes only that value, so the diff is one line: the config for priority, stage and the fallback fields, the project's own showcase.json for its facts. Nested `media` and `demo` stay hand-edited.
 
 For scripts and other tools, the same portfolio is available without the UI:
 
 ```sh
 showcase list --json                                  # the projects, in portfolio order
-showcase add ~/code/notecli --priority high --type product
+showcase add ~/code/notecli --priority high --stage product
 showcase add --repo https://github.com/you/old --id github:you/old   # no local folder
 showcase set local:notecli --priority mid
 showcase remove local:notecli                         # its files stay

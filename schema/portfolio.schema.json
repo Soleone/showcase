@@ -27,7 +27,7 @@
             "enum": ["high", "mid", "low", null],
             "description": "Sets the target tier: high S, mid A, low C."
           },
-          "type": { "type": ["string", "null"], "description": "How the portfolio labels it, e.g. product or prototype." },
+          "stage": { "type": ["string", "null"], "description": "How far along it is, e.g. product, prototype or proof of concept." },
           "path": {
             "type": ["string", "null"],
             "minLength": 1,

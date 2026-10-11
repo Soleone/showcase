@@ -24,10 +24,10 @@ Usage:
                              <dir>/feed.json plus copies of the local media
   showcase manage [config]   Browse your projects and edit their metadata. Finds the
                              portfolio by itself (see below); give a path once to switch
-  showcase add <path>        Put a project in the portfolio (--id, --priority, --type);
+  showcase add <path>        Put a project in the portfolio (--id, --priority, --stage);
                              without a folder: showcase add --repo <url> --id <id>
   showcase remove <id>       Take a project out of the portfolio; its files stay
-  showcase set <id>          Change a project's --priority (or none) or --type
+  showcase set <id>          Change a project's --priority (or none) or --stage
   showcase list              The portfolio's projects (--json for scripts)
   showcase capture [path]    Re-record the media with media.capture, then check media.motion
   showcase terminal [recipe] Build the in-browser terminal demo for a CLI from a folder
@@ -41,7 +41,7 @@ Options:
   --id <id>      Id for the new project (add), default local:<folder name>
   --priority <p> high, mid or low (add, set)
   --repo <url>   Add a project that has no local folder (add)
-  --type <t>     How the portfolio labels it, e.g. product (add, set)
+  --stage <s>    How far along it is, e.g. prototype (add, set)
   --offline      Do not request the live URL (check, collect, manage)
   --out <dir>    Where to write feed.json and media/ (collect), or the page
                  (terminal, default dist/browser)
@@ -125,15 +125,15 @@ async function portfolio(command, paths, values) {
     return console.log(projects.map((project) => `${project.id.padEnd(width)}  ${(project.priority ?? "-").padEnd(4)}  ${project.path ?? project.repo ?? ""}`).join("\n"));
   }
   if (command === "add") {
-    const { id, error } = await addProject(file, paths[0] ?? "", { id: values.id, priority: values.priority ?? null, type: values.type, repo: values.repo });
+    const { id, error } = await addProject(file, paths[0] ?? "", { id: values.id, priority: values.priority ?? null, stage: values.stage, repo: values.repo });
     if (error) throw new Error(error);
     return console.log(`Added ${id} to ${file}`);
   }
   const { projects } = await loadPortfolio(file);
   if (!projects.some((project) => project.id === paths[0])) throw new Error(`${paths[0]} is not in ${file}`);
   if (command === "set") {
-    const changes = [["priority", values.priority], ["type", values.type]].filter(([, value]) => value !== undefined);
-    if (!changes.length) throw new Error("Nothing to set. Pass --priority and/or --type.");
+    const changes = [["priority", values.priority], ["stage", values.stage]].filter(([, value]) => value !== undefined);
+    if (!changes.length) throw new Error("Nothing to set. Pass --priority and/or --stage.");
     for (const [key, raw] of changes) {
       const { errors } = await setPortfolioField(file, paths[0], portfolioFields.find((field) => field.key === key), raw === "none" ? null : raw);
       if (errors.length) throw new Error(errors.join("; "));
@@ -160,7 +160,7 @@ async function main() {
       config: { type: "string" },
       id: { type: "string" },
       priority: { type: "string" },
-      type: { type: "string" },
+      stage: { type: "string" },
       repo: { type: "string" },
       serve: { type: "boolean" },
       port: { type: "string" },
