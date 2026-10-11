@@ -4,6 +4,7 @@ const useColor = process.stdout.isTTY && !process.env.NO_COLOR;
 export const paint = (code) => (text) => useColor ? `\x1b[${code}m${text}\x1b[0m` : String(text);
 export const bold = paint("1");
 export const dim = paint("2");
+export const muted = paint("90");
 export const green = paint("32");
 export const red = paint("31");
 export const yellow = paint("33");

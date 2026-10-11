@@ -3,7 +3,7 @@ import path from "node:path";
 import { init } from "./init.js";
 import { addProject, createConfig, findConfig, fromText, gradeRow, loadEntries, manifestFields, moveProject, openRow, options, portfolioFields, removeProject, rememberConfig, setManifestField, setPortfolioField, titleOf, toText, unregisteredHere } from "./manage.js";
 import { manifestName } from "./project.js";
-import { bold, dim, green, paint, red, tierLabel, yellow } from "./report.js";
+import { bold, dim, green, muted, paint, red, tierLabel, yellow } from "./report.js";
 
 const inverse = paint("7");
 const home = (file) => file.startsWith(os.homedir()) ? `~${file.slice(os.homedir().length)}` : file;
@@ -296,7 +296,7 @@ function editorLines(edit, width) {
   const index = Math.max(ranges.findIndex(([start, end], i) => at >= start && (at < end || i === ranges.length - 1)), 0);
   const lines = [` ${bold(edit.label)}${edit.max ? dim(`  ${text.length}/${edit.max}`) : ""}`, ...ranges.map(([start, end]) => `   ${text.slice(start, end)}`)];
   if (edit.error) lines.push(` ${red(edit.error)}`);
-  if (edit.help) lines.push(dim(`   ${edit.help}`.slice(0, width)));
+  if (edit.help) for (const [start, end] of wrap(edit.help, Math.max(width - 4, 10))) lines.push(muted(`   ${edit.help.slice(start, end)}`));
   return { lines, cursor: { row: 1 + index, col: at - ranges[index][0] + 3 } };
 }
 
@@ -384,7 +384,8 @@ function detailScreen(state, width, height) {
   } else if (item) {
     lines.push(` ${bold(item.field.key)}`);
     for (const [start, end] of wrap(toText(item.field, item.value), Math.max(width - 4, 10))) lines.push(`   ${toText(item.field, item.value).slice(start, end)}`);
-    if (item.field.node.description) lines.push(dim(`   ${item.field.node.description}`.slice(0, width)));
+    const help = item.field.node.description;
+    if (help) for (const [start, end] of wrap(help, Math.max(width - 4, 10))) lines.push(muted(`   ${help.slice(start, end)}`));
   }
   const footer = state.edit ? " enter save   esc cancel   ctrl-u clear to start   ctrl-k clear to end" : " ↑↓ select   enter edit   ←→ change choice   n new showcase.json   esc back";
   return { lines, cursor, footer };
