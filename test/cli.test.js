@@ -72,3 +72,24 @@ test("init shortens a long lead to its first sentence", async () => {
   assert.equal(JSON.parse(stdout.slice(stdout.indexOf("{"), stdout.indexOf("\n}") + 2)).pitch, "Demo is a tool.");
   assert.match(stdout, /description: required/);
 });
+
+test("add, list and remove edit the portfolio without the UI; collect finds it by itself", async () => {
+  const root = await fixture({ "proj/README.md": "# Proj\n", "portfolio.json": { projects: [] } });
+  const config = path.join(root, "portfolio.json");
+  const added = await run("add", path.join(root, "proj"), "--config", config, "--priority", "high", "--type", "product", "--id", "local:p");
+  assert.match(added.stdout, /Added local:p/);
+  assert.equal((await run("add", path.join(root, "proj"), "--config", config)).code, 2);
+  assert.equal((await run("add", root, "--config", config, "--priority", "urgent")).code, 2);
+  assert.deepEqual(JSON.parse((await run("list", "--json", "--config", config)).stdout).map((p) => [p.id, p.priority, p.type]), [["local:p", "high", "product"]]);
+  assert.match((await run("list", "--config", config)).stdout, /^local:p\s+high\s+/);
+  assert.match((await run("set", "local:p", "--config", config, "--priority", "low", "--type", "prototype")).stdout, /Updated local:p/);
+  assert.equal((await run("set", "local:p", "--config", config, "--priority", "urgent")).code, 2);
+  assert.equal((await run("set", "local:p", "--config", config)).code, 2);
+  await run("set", "local:p", "--config", config, "--priority", "high", "--type", "product");
+  const out = path.join(root, "site");
+  await run("collect", "--config", config, "--out", out, "--offline");
+  assert.equal(JSON.parse(await readFile(path.join(out, "feed.json"), "utf8")).projects[0].priority, "high");
+  assert.match((await run("remove", "local:nope", "--config", config)).stderr, /not in/);
+  await run("remove", "local:p", "--config", config);
+  assert.deepEqual(JSON.parse(await readFile(config, "utf8")).projects, []);
+});

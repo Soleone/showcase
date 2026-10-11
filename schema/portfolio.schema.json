@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/Soleone/showcase/main/schema/portfolio.schema.json",
-  "title": "portfolio.config.json",
+  "title": "portfolio.json",
   "description": "Which projects a portfolio shows and how much it cares about each, in portfolio order. Facts about each project live in its own showcase.json.",
   "type": "object",
   "required": ["projects"],

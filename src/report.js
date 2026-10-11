@@ -1,15 +1,15 @@
 import os from "node:os";
 
 const useColor = process.stdout.isTTY && !process.env.NO_COLOR;
-const paint = (code) => (text) => useColor ? `\x1b[${code}m${text}\x1b[0m` : String(text);
-const bold = paint("1");
-const dim = paint("2");
-const green = paint("32");
-const red = paint("31");
-const yellow = paint("33");
+export const paint = (code) => (text) => useColor ? `\x1b[${code}m${text}\x1b[0m` : String(text);
+export const bold = paint("1");
+export const dim = paint("2");
+export const green = paint("32");
+export const red = paint("31");
+export const yellow = paint("33");
 const tierColors = { S: paint("1;35"), A: paint("1;32"), B: paint("1;36"), C: paint("1;33"), D: paint("1;31") };
 
-const tierLabel = (tier) => tierColors[tier](tier);
+export const tierLabel = (tier) => tierColors[tier](tier);
 const home = (file) => file.startsWith(os.homedir()) ? `~${file.slice(os.homedir().length)}` : file;
 const mark = (result) => result.status === "pass" ? green("✓") : result.status === "skip" ? yellow("?") : result.required ? red("✗") : yellow("·");
 

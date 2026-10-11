@@ -4,10 +4,10 @@ Where showcase is going, what is decided, and what to do next. Update this file 
 
 ## Why it exists
 
-A portfolio needs two things: deciding *which* projects to show, and making each one *demoable*. showcase owns demoability: it grades a project from D to S and says what to do next. Selection happens wherever the portfolio is curated, written out as `portfolio.config.json`.
+A portfolio needs two things: deciding *which* projects to show, and making each one *demoable*. showcase owns demoability: it grades a project from D to S and says what to do next. Selection happens wherever the portfolio is curated, written out as `portfolio.json`.
 
 ```
-portfolio.config.json   which projects, how much the portfolio cares
+portfolio.json          which projects, how much the portfolio cares
 showcase                how demoable each project is      → showcase.json per project, feed.json
 portfolio site          shows the result                  ← reads feed.json through a thin adapter
 ```
@@ -34,6 +34,7 @@ portfolio site          shows the result                  ← reads feed.json th
 - **`capture`**: runs `media.capture`, then checks `media.motion` (animated, loops, width, length, size). `@soleone/showcase/capture` records a web app as a looping WebP from agent-browser's stream; the project supplies `start`, `drive` and `verify`.
 - **[docs/playbook.md](docs/playbook.md)**: what worked taking a CLI and a web app to S.
 - **`showcase` agent skill** (`skills/showcase/SKILL.md`): the taste parts (pitch, demo strategy, sample data, recording), measured with `check` before and after, asking before anything that publishes. Ships in the package for pi (`pi.skills`), as a Claude Code plugin (`.claude-plugin/`) and for `npx skills add`. Tested by giving an agent a sample project with no mention of the skill; it found it on its own.
+- **`manage [config]`**: a dependency-free terminal UI over a portfolio.json, with no setup: finds the config (arg, which is then remembered, `$SHOWCASE_CONFIG`, nearest upwards, remembered, then `~/.config/showcase/`) and creates a starter one from the current folder. Lists every project with tier, goal and gap; adds and removes projects; edits portfolio fields and showcase.json facts in place (one-line diffs); drafts a missing showcase.json; reorders. The same portfolio is scriptable: `add`, `remove`, `set`, `list --json`, and `collect` with no path. Fields and limits come from the schemas. `src/manage.js` is the file model, `src/tui.js` the view, tested with fake keys.
 - **showcase shows itself (A).** Four sample projects in `demo/projects`, one per tier from D to A (`npm run demo`), a browser terminal demo of the CLI in `demo/browser`, and `npm run media:capture`, which records that demo with `@soleone/showcase/capture` into `docs/media`. S is hosting `demo/browser` and setting `live`.
 
 ## Next

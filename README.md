@@ -15,6 +15,7 @@ showcase check ~/code/a ~/code/b --matrix   # every check against every project
 showcase init                 # draft showcase.json from the README and package.json
 showcase capture              # re-record the media with media.capture and check the loop
 showcase terminal --serve     # build the in-browser terminal demo for a CLI
+showcase manage               # browse, add and edit your projects; no setup
 ```
 
 No dependencies; needs Node 22 or later.
@@ -85,7 +86,7 @@ The full contract is [schema/showcase.schema.json](schema/showcase.schema.json).
 
 ## Feed a portfolio site
 
-A portfolio picks its projects in `portfolio.config.json`, in the order it shows them ([schema](schema/portfolio.schema.json)):
+A portfolio picks its projects in `portfolio.json`, in the order it shows them ([schema](schema/portfolio.schema.json)):
 
 ```json
 {
@@ -97,10 +98,38 @@ A portfolio picks its projects in `portfolio.config.json`, in the order it shows
 ```
 
 ```sh
-showcase collect portfolio.config.json --out public/showcase
+showcase collect portfolio.json --out public/showcase
 ```
 
 This writes `feed.json` with one entry per project: its showcase.json facts (or a draft from the README when it has none), `tier`, `target` and `gap`, the required checks still failing up to the target. Priority sets the target: high S, mid A, low C, capped by `ceiling`. Local media is copied to `media/<slug>/` and the feed points at the copies. Projects without a local path are listed ungraded.
+
+## Browse and edit your projects
+
+```sh
+showcase manage
+```
+
+No setup. It opens, in this order: the path you pass (remembered, so you give it once and never again), `$SHOWCASE_CONFIG`, the nearest `portfolio.json` from the current folder upwards, the one you passed last time, then `~/.config/showcase/portfolio.json`. If there is none of those, it creates that last one from the project in the current folder (or the projects directly inside it) and says so. After that you add projects from the UI.
+
+It is a full-screen list of every project with its tier, the goal its priority sets and what is still missing (`--offline` skips the live URL request). Keys:
+
+- `enter` opens a project, where `enter` edits a text field, `←` `→` change a choice, and `n` drafts a missing showcase.json from the README.
+- `a` adds a project by path, `d` removes one from the portfolio (its files stay), `J` `K` change the order.
+- `r` refreshes, `q` quits.
+
+Fields come from the two schemas, so the limits you see while typing (`n/160`) are the validator's. Every edit is written right away and changes only that value, so the diff is one line: the config for priority, type and the fallback fields, the project's own showcase.json for its facts. Nested `media` and `demo` stay hand-edited.
+
+For scripts and other tools, the same portfolio is available without the UI:
+
+```sh
+showcase list --json                                  # the projects, in portfolio order
+showcase add ~/code/notecli --priority high --type product
+showcase set local:notecli --priority mid
+showcase remove local:notecli                         # its files stay
+showcase collect --out public/showcase                # no path needed either
+```
+
+Each takes `--config <file>` to use another portfolio.
 
 ## Keep the media fresh
 
