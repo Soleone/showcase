@@ -7,6 +7,7 @@
   "year": 2026,
   "tech": ["Node.js"],
   "repo": "https://github.com/Soleone/showcase",
+  "live": "https://showcase.soleone.xyz",
   "media": {
     "hero": "docs/media/hero.png",
     "motion": "docs/media/demo.webp",

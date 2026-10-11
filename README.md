@@ -2,6 +2,8 @@
 
 Grade how demoable a project is, from D to S, and get the exact next steps to raise it.
 
+**[Try it in your browser](https://showcase.soleone.xyz)**, no install.
+
 ![showcase grading four sample projects in its browser demo](docs/media/demo.webp)
 
 ## Quick start
