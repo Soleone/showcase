@@ -212,25 +212,8 @@ async function isPortfolio(file) {
 }
 
 const userDir = (env) => path.join(env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config"), "showcase");
-const settingsFile = (env) => path.join(userDir(env), "settings.json");
-
-async function remembered(env) {
-  try {
-    const file = JSON.parse(await readFile(settingsFile(env), "utf8")).config;
-    return typeof file === "string" && await exists(file) ? file : null;
-  } catch {
-    return null;
-  }
-}
-
-// Makes this portfolio the default, so a path given once is never needed again.
-export async function rememberConfig(file, env = process.env) {
-  await mkdir(userDir(env), { recursive: true });
-  await writeJson(settingsFile(env), { config: path.resolve(file) });
-}
-
 // Where the portfolio lives when nobody says: $SHOWCASE_CONFIG, the nearest portfolio.json from here upwards,
-// the one passed to `manage` last time, then the user-level one.
+// then the user-level one.
 export async function findConfig({ cwd = process.cwd(), env = process.env } = {}) {
   if (env.SHOWCASE_CONFIG) {
     const file = path.resolve(cwd, env.SHOWCASE_CONFIG);
@@ -240,8 +223,6 @@ export async function findConfig({ cwd = process.cwd(), env = process.env } = {}
     if (await isPortfolio(path.join(dir, configName))) return { file: path.join(dir, configName), exists: true };
     if (path.dirname(dir) === dir) break;
   }
-  const last = await remembered(env);
-  if (last) return { file: last, exists: true };
   const file = path.join(userDir(env), configName);
   return { file, exists: await exists(file) };
 }

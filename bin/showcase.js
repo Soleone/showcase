@@ -54,9 +54,9 @@ Options:
   --help, -h     Show this help
   --version      Show the version
 
-manage opens, in order: the [config] argument (remembered, so you pass it once), $SHOWCASE_CONFIG,
-the nearest portfolio.json from here upwards, the one remembered, then
-~/.config/showcase/portfolio.json, which it creates from the projects in this folder.
+manage opens, in order: the [config] argument, $SHOWCASE_CONFIG, the nearest portfolio.json
+from here upwards, then ~/.config/showcase/portfolio.json, which it creates from the projects in
+this folder. You normally pass nothing.
 
 Tiers:
   D  nothing to show yet

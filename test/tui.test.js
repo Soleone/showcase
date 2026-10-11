@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
-import { createConfig, findConfig, rememberConfig } from "../src/manage.js";
+import { createConfig, findConfig } from "../src/manage.js";
 import { createApp, parseKeys, wrap } from "../src/tui.js";
 import { fixture, manifest, polishedFiles } from "./helpers.js";
 
@@ -252,16 +252,6 @@ test("no offer when the project is declined, already listed, or holds the portfo
   await declined.offerHere();
   await press(declined, "n");
   assert.equal((await json(configFile)).projects.length, 3);
-});
-
-test("a portfolio passed once is remembered, unless it is gone or a nearer one exists", async () => {
-  const root = await fixture({ "elsewhere/mine.json": { projects: [] }, "work/portfolio.json": { projects: [] }, "empty/.keep": "" });
-  const env = { XDG_CONFIG_HOME: path.join(root, "xdg") };
-  await rememberConfig(path.join(root, "elsewhere/mine.json"), env);
-  assert.deepEqual(await findConfig({ cwd: path.join(root, "empty"), env }), { file: path.join(root, "elsewhere/mine.json"), exists: true });
-  assert.equal((await findConfig({ cwd: path.join(root, "work"), env })).file, path.join(root, "work/portfolio.json"));
-  await rememberConfig(path.join(root, "gone.json"), env);
-  assert.equal((await findConfig({ cwd: path.join(root, "empty"), env })).file, path.join(root, "xdg/showcase/portfolio.json"));
 });
 
 test("a portfolio.json that is some other project's data is not mistaken for the portfolio", async () => {

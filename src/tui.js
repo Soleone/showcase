@@ -1,7 +1,7 @@
 import os from "node:os";
 import path from "node:path";
 import { init } from "./init.js";
-import { addProject, createConfig, findConfig, fromText, gradeRow, loadEntries, manifestFields, moveProject, openRow, options, portfolioFields, removeProject, rememberConfig, setManifestField, setPortfolioField, titleOf, toText, unregisteredHere } from "./manage.js";
+import { addProject, createConfig, findConfig, fromText, gradeRow, loadEntries, manifestFields, moveProject, openRow, options, portfolioFields, removeProject, setManifestField, setPortfolioField, titleOf, toText, unregisteredHere } from "./manage.js";
 import { manifestName } from "./project.js";
 import { bold, dim, green, muted, paint, red, tierLabel, yellow } from "./report.js";
 
@@ -431,8 +431,7 @@ export async function run(options) {
   if (configFile) {
     configFile = path.resolve(cwd, configFile);
     await loadEntries(configFile);
-    await rememberConfig(configFile);
-    notice = `Using ${home(configFile)}, and remembering it. Plain \`showcase manage\` opens it from now on.`;
+    notice = `Using ${home(configFile)}.`;
   } else {
     const found = await findConfig({ cwd, env: process.env });
     configFile = found.file;

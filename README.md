@@ -109,7 +109,7 @@ This writes `feed.json` with one entry per project: its showcase.json facts (or 
 showcase manage
 ```
 
-No setup. It opens, in this order: the path you pass (remembered, so you give it once and never again), `$SHOWCASE_CONFIG`, the nearest `portfolio.json` from the current folder upwards, the one you passed last time, then `~/.config/showcase/portfolio.json`. If there is none of those, it creates that last one from the project in the current folder (or the projects directly inside it) and says so. After that you add projects from the UI.
+No setup. It opens, in this order: the path you pass (for this run only), `$SHOWCASE_CONFIG`, the nearest `portfolio.json` from the current folder upwards, then `~/.config/showcase/portfolio.json`. If there is none of those, it creates that last one from the project in the current folder (or the projects directly inside it) and says so. After that you add projects from the UI.
 
 It is a full-screen list of every project with its tier, the goal its priority sets and what is still missing (`--offline` skips the live URL request). Keys:
 
