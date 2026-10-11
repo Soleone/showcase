@@ -68,7 +68,7 @@ test("changing priority writes the config and moves the goal", async () => {
 test("editing a showcase.json field saves it, and the schema rejects what it forbids", async () => {
   const { app, manifestFile } = await setup();
   await press(app, "\r");
-  for (let i = 0; i < 6; i += 1) await press(app, "j");
+  for (let i = 0; i < 4; i += 1) await press(app, "j");
   await press(app, "\r");
   assert.match(text(app), /pitch\s+\d+\/160/);
   await press(app, "\x15", "x".repeat(170), "\r");
@@ -82,7 +82,7 @@ test("editing a showcase.json field saves it, and the schema rejects what it for
 test("clearing a required field is refused and an optional list round-trips", async () => {
   const { app, manifestFile } = await setup();
   await press(app, "\r");
-  for (let i = 0; i < 5; i += 1) await press(app, "j");
+  for (let i = 0; i < 3; i += 1) await press(app, "j");
   await press(app, "\r", "\x15", "\r");
   assert.match(text(app), /title: required/);
   await press(app, "\x1b");
@@ -116,7 +116,7 @@ test("a project without showcase.json can get a draft", async () => {
 test("the editor puts the cursor inside the wrapped text", async () => {
   const { app } = await setup();
   await press(app, "\r");
-  for (let i = 0; i < 7; i += 1) await press(app, "j");
+  for (let i = 0; i < 5; i += 1) await press(app, "j");
   await press(app, "\r", "\x1b[H");
   const { cursor, lines } = app.render(size);
   assert.match(lines[cursor.row], /^ {3}Reads your session logs/);
@@ -135,8 +135,8 @@ test("the list can be drawn while projects are still loading", async () => {
 
 test("keys that arrive in one chunk are separate presses outside the editor but one paste inside it", async () => {
   const { app, manifestFile } = await setup();
-  await press(app, "\rjjjjjj\r");
-  assert.equal(app.state.field, 6);
+  await press(app, "\rjjjj\r");
+  assert.equal(app.state.field, 4);
   assert.ok(app.state.edit);
   await press(app, "\x15jj kk\r");
   assert.equal((await json(manifestFile)).pitch, "jj kk");
@@ -147,11 +147,11 @@ test("editing one value leaves the rest of the file exactly as it was", async ()
   const original = `{\n  "title": "Demo",   "pitch": "Old \\"pitch\\", with commas",\n  "description": "Reads logs.",\n  "kind": "cli",\n  "tech": ["Node.js", "SQLite"],\n  "media": { "hero": "docs/hero.png" }\n}\n`;
   await writeFile(manifestFile, original);
   await press(app, "r");
-  await press(app, "\rjjjjjj\r", "\x15New pitch\r");
+  await press(app, "\rjjjj\r", "\x15New pitch\r");
   assert.equal(await readFile(manifestFile, "utf8"), original.replace(/"Old .*?commas"/, '"New pitch"'));
 
   const config = await readFile(path.join(root, "portfolio.json"), "utf8");
-  await press(app, "k", "k", "k", "k", "k", "\x1b[C");
+  await press(app, "k", "k", "k", "k", "\x1b[C");
   assert.notEqual(await readFile(path.join(root, "portfolio.json"), "utf8"), config);
 });
 
@@ -258,4 +258,13 @@ test("a portfolio.json that is some other project's data is not mistaken for the
   const root = await fixture({ "site/portfolio.json": { items: ["a", "b"] }, "site/src/.keep": "" });
   const env = { XDG_CONFIG_HOME: path.join(root, "xdg") };
   assert.equal((await findConfig({ cwd: path.join(root, "site/src"), env })).file, path.join(root, "xdg/showcase/portfolio.json"));
+});
+
+test("the portfolio title and repo only show for a project without a showcase.json", async () => {
+  const { app } = await setup();
+  await press(app, "\r");
+  assert.equal((text(app).match(/ repo /g) ?? []).length, 1, "repo appears once, from showcase.json");
+  await press(app, "\x1b", "j", "j", "\r");
+  assert.match(text(app), /\n title\b[^\n]*remote/);
+  assert.match(text(app), /\n repo\b/);
 });

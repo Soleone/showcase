@@ -44,10 +44,13 @@ export function parseKeys(chunk) {
   return tokens.map((token) => keyNames.has(token) ? { name: keyNames.get(token) } : /^[^\x00-\x1f\x7f\x1b]+$/.test(token) ? { name: "char", text: token } : { name: "ignored" });
 }
 
+// The portfolio's title and repo only stand in for a project without a showcase.json; with one, its facts win.
+const standIns = new Set(["title", "repo"]);
+
 // The editable lines of the detail screen.
 function items(row) {
-  const list = portfolioFields.map((field) => ({ field, source: "portfolio", value: row.entry[field.key] }));
   const data = row.project?.manifest?.data;
+  const list = portfolioFields.filter((field) => !(data && standIns.has(field.key))).map((field) => ({ field, source: "portfolio", value: row.entry[field.key] }));
   if (data) list.push(...manifestFields.map((field) => ({ field, source: "manifest", value: data[field.key] })));
   return list;
 }

@@ -117,7 +117,7 @@ It is a full-screen list of every project with its tier, the goal its priority s
 - `a` adds a project by path, `d` removes one from the portfolio (its files stay), `J` `K` change the order.
 - `r` refreshes, `q` quits.
 
-Fields come from the two schemas, so the limits you see while typing (`n/160`) are the validator's. Every edit is written right away and changes only that value, so the diff is one line: the config for priority, stage and the fallback fields, the project's own showcase.json for its facts. Nested `media` and `demo` stay hand-edited.
+Fields come from the two schemas, so the limits you see while typing (`n/160`) are the validator's. Every edit is written right away and changes only that value, so the diff is one line: the config for priority, stage and path (plus title and repo, but only for a project without a showcase.json, whose own facts always win), the project's own showcase.json for its facts. Nested `media` and `demo` stay hand-edited.
 
 For scripts and other tools, the same portfolio is available without the UI:
 
