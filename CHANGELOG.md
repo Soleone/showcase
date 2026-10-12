@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.0](https://github.com/Soleone/showcase/compare/v0.1.0...v0.2.0) (2026-10-12)
+
+### Features
+
+* **brand:** add optional brand metadata (icon, logo, wordmark, colors) with an advice-only icon check ([0369097](https://github.com/Soleone/showcase/commit/03690977c0ad3a5ae82097026bedc6f227fd4b7d))
+* **guide:** teach agents from the CLI with showcase guide, and shrink the skill to a pointer ([b7215ec](https://github.com/Soleone/showcase/commit/b7215ec9b3b10d788c1bbce665fe5803f2f18b31))
+* **manage:** pick a project up with m and move it, saved to portfolio.json as you go ([7424969](https://github.com/Soleone/showcase/commit/742496931b72a3b6d74e78c83b4174df4067f215))
+* **manage:** say where a project's goal comes from, and that a ceiling only lowers it ([f203725](https://github.com/Soleone/showcase/commit/f203725b04ef607121c7cee80f6b33ee7c45d2fe))
+* **manage:** sort the list with s, by priority and tier first ([6c5c44b](https://github.com/Soleone/showcase/commit/6c5c44b8a056f40a74d0315127ffe9e52939f0c0))
+* **review:** discover projects from folders and GitHub, and review them in manage ([5ebcfe0](https://github.com/Soleone/showcase/commit/5ebcfe0339d2024af433ca45a6d41f48f3708be4))
+* **terminal:** add a theme picker that recolors the page and the terminal ([b8bd18e](https://github.com/Soleone/showcase/commit/b8bd18e0870e44b6016c4215b0dbcd54b2e81c99))
+
+### Bug Fixes
+
+* **demo:** ship a sample portfolio so manage has projects in the browser ([868a30c](https://github.com/Soleone/showcase/commit/868a30ceebf31866bf76dcb3f95b19ee92dc8043))
+* **manage:** list a folder once when two entries reach it through a symlink ([6f31e76](https://github.com/Soleone/showcase/commit/6f31e763284fddf549cff7c195d78952c46de1f3))
+* **review:** ask where projects live instead of guessing, and suggest home folders ([bb4a963](https://github.com/Soleone/showcase/commit/bb4a96336279bf7b9bcf95fd02459bcf5e480454))
+
 ## 0.1.0 (2026-10-11)
 
 ### ⚠ BREAKING CHANGES

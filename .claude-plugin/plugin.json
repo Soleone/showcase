@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "showcase",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Make a project demoable: grade it from D to S with the showcase CLI and fix what it reports, from the pitch to a live demo.",
   "author": { "name": "Soleone" },
   "homepage": "https://github.com/Soleone/showcase",
