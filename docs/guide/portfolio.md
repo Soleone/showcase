@@ -4,12 +4,16 @@ A portfolio picks its projects in `portfolio.json` ([schema](../../schema/portfo
 
 ```json
 {
+  "roots": ["$HOME/code"],
+  "ignored": ["local:old/scratch"],
   "projects": [
     { "id": "local:notecli", "priority": "high", "path": "$HOME/code/notecli" },
     { "id": "github:you/old-library", "title": "old-library", "priority": "low", "repo": "https://github.com/you/old-library" }
   ]
 }
 ```
+
+`roots` are the folders to scan for projects to review and `ignored` are ids someone decided against. Both are optional. Choosing is the person's job: decide which projects are in, never include or ignore on your own judgment unless asked.
 
 ## Finding the file
 
@@ -25,7 +29,12 @@ showcase set local:notecli --priority mid             # high, mid, low, or none
 showcase set local:notecli --stage prototype          # saved in its showcase.json
 showcase remove local:notecli                         # its files stay
 showcase collect --out public/showcase                # writes feed.json and copies local media and brand files
+showcase discover --root ~/code --json --status review   # scan folders and GitHub; the candidates not yet decided
+showcase ignore local:old/scratch                     # decided against: it leaves the review queue
+showcase unignore local:old/scratch                   # back in the queue
 ```
+
+`discover` lists each candidate with its `id`, `path`, `repo`, `score` and the `reasons` behind it, and a `status` of `review`, `included` or `ignored`. To include one, `showcase add <path> --id <id>` (or `--repo <url> --id <id>` for a GitHub project with no folder); adding an ignored project un-ignores it. `--no-github` scans folders only.
 
 Edit portfolio.json through these, not by hand, so the diff stays one line. Do not run `showcase manage`: it is a full-screen interface for a person. Agents use `list`, `add`, `set` and `remove`.
 

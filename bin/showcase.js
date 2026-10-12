@@ -6,7 +6,8 @@ import { evaluate, tiers } from "../src/checks.js";
 import { collect } from "../src/collect.js";
 import { guide } from "../src/guide.js";
 import { init } from "../src/init.js";
-import { addProject, findConfig, manifestFields, openRow, portfolioFields, removeProject, setManifestField, setPortfolioField, stageOf } from "../src/manage.js";
+import { discover } from "../src/discover.js";
+import { addProject, findConfig, ignoreProjects, setRoots, unignoreProjects, manifestFields, openRow, portfolioFields, removeProject, setManifestField, setPortfolioField, stageOf } from "../src/manage.js";
 import { inspectMotion, runCapture } from "../src/inspect.js";
 import { loadPortfolio } from "../src/collect.js";
 import { loadProject } from "../src/project.js";
@@ -31,6 +32,10 @@ Usage:
   showcase remove <id>       Take a project out of the portfolio; its files stay
   showcase set <id>          Change a project's --priority (or none) or its showcase.json --stage
   showcase list              The portfolio's projects (--json for scripts)
+  showcase discover          Scan your folders and GitHub for projects to review; --root <folder>
+                             sets what to scan, --json lists them, --status picks which
+  showcase ignore <id...>    Decide against projects so they leave the review queue
+  showcase unignore <id...>  Put them back in the queue
   showcase capture [path]    Re-record the media with media.capture, then check media.motion
   showcase terminal [recipe] Build the in-browser terminal demo for a CLI from a folder
                              with terminal.json (default demo/browser)
@@ -45,6 +50,9 @@ Options:
   --id <id>      Id for the new project (add), default local:<folder name>
   --priority <p> high, mid or low (add, set)
   --repo <url>   Add a project that has no local folder (add)
+  --root <dir>   A folder to scan for projects, repeatable; saved in portfolio.json (discover)
+  --status <s>   review, included or ignored (discover --json)
+  --no-github    Do not ask GitHub, scan folders only (discover)
   --stage <s>    product, prototype or proof of concept, saved in its showcase.json (set)
   --offline      Do not request the live URL (check, collect, manage)
   --out <dir>    Where to write feed.json and media/ (collect), or the page
@@ -160,6 +168,34 @@ async function portfolio(command, paths, values) {
   console.log(`Removed ${paths[0]} from ${file}`);
 }
 
+async function discovery(command, paths, values) {
+  const file = await configFor(values.config);
+  if (command === "ignore" || command === "unignore") {
+    if (!paths.length) throw new Error(`Usage: showcase ${command} <id...>`);
+    const changed = await (command === "ignore" ? ignoreProjects : unignoreProjects)(file, paths);
+    const left = paths.filter((id) => !changed.includes(id));
+    console.log(`${command === "ignore" ? "Ignored" : "Back in the review queue"}: ${changed.length ? changed.join(", ") : "nothing"}`);
+    if (left.length) console.log(`Unchanged (${command === "ignore" ? "already ignored or in the portfolio" : "not ignored"}): ${left.join(", ")}`);
+    return;
+  }
+  if (paths.length) throw new Error("discover takes no arguments; use --root <folder> to choose what to scan");
+  if (values.status && !["review", "included", "ignored"].includes(values.status)) throw new Error("--status must be review, included or ignored");
+  if (values.root?.length) {
+    const { errors } = await setRoots(file, values.root);
+    if (errors.length) throw new Error(errors.join("; "));
+  }
+  const progress = process.stderr.isTTY ? ({ phase, done, total }) => process.stderr.write(`\r${phase === "github" ? "Asking GitHub" : `Scanning folders ${done}/${total}`}\x1b[K`) : undefined;
+  const result = await discover(file, { github: !values["no-github"], onProgress: progress });
+  if (progress) process.stderr.write("\r\x1b[K");
+  const counts = Object.fromEntries(["review", "included", "ignored"].map((status) => [status, result.candidates.filter((candidate) => candidate.status === status).length]));
+  if (values.json) return console.log(JSON.stringify(result.candidates.filter((candidate) => !values.status || candidate.status === values.status), null, 2));
+  console.log(`Found ${result.candidates.length} projects in ${result.roots.join(", ")}${result.github ? " and on GitHub" : ""}: ${counts.included} in the portfolio, ${counts.ignored} ignored, ${counts.review} to review.`);
+  for (const note of result.notes) console.log(`! ${note}`);
+  const queue = result.candidates.filter((candidate) => candidate.status === (values.status ?? "review"));
+  const width = Math.max(...queue.map((candidate) => candidate.id.length), 2);
+  console.log(`\n${queue.slice(0, 15).map((candidate) => `${String(candidate.score).padStart(3)}  ${candidate.id.padEnd(width)}  ${candidate.reasons.slice(0, 4).join(", ")}`).join("\n")}${queue.length > 15 ? `\n... ${queue.length - 15} more; showcase manage (tab) reviews them, --json lists them` : ""}`);
+}
+
 async function main() {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
@@ -178,6 +214,9 @@ async function main() {
       priority: { type: "string" },
       stage: { type: "string" },
       repo: { type: "string" },
+      root: { type: "string", multiple: true },
+      status: { type: "string" },
+      "no-github": { type: "boolean" },
       serve: { type: "boolean" },
       port: { type: "string" },
       help: { type: "boolean", short: "h" },
@@ -207,6 +246,7 @@ async function main() {
     return;
   }
   if (["add", "remove", "set", "list"].includes(command)) return portfolio(command, paths, values);
+  if (["discover", "ignore", "unignore"].includes(command)) return discovery(command, paths, values);
   if (command === "collect") {
     if (paths.length > 1 || !values.out) throw new Error("Usage: showcase collect [portfolio.json] --out <dir>");
     const { file, feed, reports, warnings } = await collect(paths[0] ?? await configFor(values.config), { out: values.out, offline: values.offline });

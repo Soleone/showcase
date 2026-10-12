@@ -1,12 +1,16 @@
 import os from "node:os";
 import path from "node:path";
-import { targetTier } from "./collect.js";
+import { loadPortfolio, targetTier } from "./collect.js";
+import { discover, reviewList, suggestRoots } from "./discover.js";
 import { init } from "./init.js";
-import { addProject, createConfig, findConfig, fromText, gradeRow, loadEntries, manifestFields, moveProjectTo, openRow, options, portfolioFields, removeProject, setManifestField, setPortfolioField, sortRows, sorts, stageOf, titleOf, toText, unregisteredHere } from "./manage.js";
+import { addProject, createConfig, findConfig, fromText, gradeRow, ignoreProjects, loadEntries, manifestFields, moveProjectTo, openRow, options, portfolioFields, removeProject, setManifestField, setPortfolioField, setRoots, sortRows, sorts, stageOf, titleOf, toText, unignoreProjects, unregisteredHere } from "./manage.js";
 import { manifestName } from "./project.js";
 import { bold, dim, green, muted, paint, red, tierLabel, yellow } from "./report.js";
 
 const inverse = paint("7");
+const reviewFilters = ["review", "included", "ignored", "all"];
+const filterNames = { review: "Needs review", included: "In the portfolio", ignored: "Ignored", all: "All projects" };
+const visible = (review) => review.filter === "all" ? review.all : review.all.filter((candidate) => candidate.status === review.filter);
 const home = (file) => file.startsWith(os.homedir()) ? `~${file.slice(os.homedir().length)}` : file;
 
 // Plain-text helpers: fit before painting so escape codes never count towards the width.
@@ -56,8 +60,9 @@ function items(row) {
   return list;
 }
 
-export function createApp({ configFile, cwd = process.cwd(), notice = null, offline = false, env = process.env, fetch = globalThis.fetch, onChange = () => {} } = {}) {
-  const state = { rows: [], screen: "list", cursor: 0, field: 0, edit: null, confirm: null, status: notice ? { text: notice, kind: "ok" } : null, base: null, sort: "priority", order: [], grab: null };
+export function createApp({ configFile, cwd = process.cwd(), notice = null, offline = false, env = process.env, fetch = globalThis.fetch, scanOptions = {}, onChange = () => {} } = {}) {
+  const review = { all: [], filter: "review", cursor: 0, scannedAt: null, roots: [], notes: [], scanning: null, undo: [], dirty: false };
+  const state = { rows: [], screen: "list", cursor: 0, field: 0, edit: null, confirm: null, status: notice ? { text: notice, kind: "ok" } : null, base: null, sort: "priority", order: [], grab: null, review };
   const pending = new Set();
 
   const flash = (text, kind = "info") => { state.status = { text, kind }; };
@@ -258,11 +263,150 @@ export function createApp({ configFile, cwd = process.cwd(), notice = null, offl
     }
   }
 
+  // The review queue: what the last scan found, with today's decisions applied.
+  const shown = () => visible(review);
+  const reviewing = () => shown()[review.cursor];
+
+  function showReview(result) {
+    const id = reviewing()?.id;
+    Object.assign(review, { all: result.candidates, scannedAt: result.scannedAt, roots: result.roots ?? [], notes: result.notes ?? review.notes });
+    const at = shown().findIndex((candidate) => candidate.id === id);
+    review.cursor = at >= 0 ? at : Math.min(review.cursor, Math.max(shown().length - 1, 0));
+  }
+
+  async function rescan() {
+    if (review.scanning) return;
+    review.scanning = { phase: "folders", done: 0, total: 0 };
+    onChange();
+    try {
+      const { notes } = await discover(configFile, { env, ...scanOptions, onProgress: (progress) => { review.scanning = progress; onChange(); } });
+      review.notes = notes;
+      showReview(await reviewList(configFile, { env }));
+      const waiting = review.all.filter((candidate) => candidate.status === "review").length;
+      flash(`Found ${review.all.length} projects, ${waiting} to review${notes.length ? `. ${notes[0]}` : ""}`, notes.length ? "info" : "ok");
+    } catch (error) {
+      flash(error.message, "error");
+    } finally {
+      review.scanning = null;
+    }
+  }
+
+  function rootsPrompt() {
+    const text = (review.roots.length ? review.roots : suggestRoots(env)).join(", ");
+    state.edit = {
+      label: "Folders to scan for projects", help: "Comma separated. Each project is a folder in one of them, or in a folder inside one, like $SRC/category/project. GitHub is scanned too when gh is logged in.", text, pos: text.length, error: null,
+      submit: async (typed) => {
+        const roots = typed.split(",").map((root) => root.trim()).filter(Boolean);
+        if (!roots.length) return "Type at least one folder";
+        const { errors } = await setRoots(configFile, roots);
+        if (errors.length) return errors[0];
+        review.roots = roots;
+        track(rescan());
+        return null;
+      },
+    };
+  }
+
+  async function openReview() {
+    state.screen = "review";
+    const config = await loadPortfolio(configFile);
+    review.roots = config.roots ?? [];
+    if (!review.roots.length) return rootsPrompt();
+    const cached = await reviewList(configFile, { env });
+    if (cached) showReview(cached);
+    else track(rescan());
+  }
+
+  function leaveReview() {
+    state.screen = "list";
+    state.status = null;
+    if (review.dirty) { review.dirty = false; track(load()); }
+  }
+
+  // Records a decision on one candidate. In a filtered view it leaves the list and the next one slides up.
+  function settle(candidate, status, entry = null) {
+    const at = review.all.findIndex((other) => other.id === candidate.id);
+    review.all[at] = { ...candidate, status, entry };
+    if (status === "included" || candidate.status === "included") review.dirty = true;
+    if (review.filter === "all") review.cursor = Math.min(review.cursor + 1, review.all.length - 1);
+    else review.cursor = Math.min(review.cursor, Math.max(shown().length - 1, 0));
+  }
+
+  const priorities = { 1: "high", 2: "mid", 3: "low" };
+
+  async function includeCandidate(priority = null) {
+    const candidate = reviewing();
+    if (!candidate) return;
+    if (candidate.status === "included") return flash("Already in the portfolio", "error");
+    const { id, error } = await addProject(configFile, candidate.path ?? "", { cwd, env, id: candidate.id, repo: candidate.repo ?? undefined, priority });
+    if (error) return flash(error, "error");
+    review.undo.push({ id, action: "include", wasIgnored: candidate.status === "ignored" });
+    settle(candidate, "included", { id, priority });
+    flash(`Added ${id}${priority ? ` with ${priority} priority` : ""}`, "ok");
+  }
+
+  async function toggleIgnore() {
+    const candidate = reviewing();
+    if (!candidate) return;
+    if (candidate.status === "included") return flash("In the portfolio already. Remove it from the portfolio list (tab, then d) first.", "error");
+    const ignoring = candidate.status !== "ignored";
+    await (ignoring ? ignoreProjects : unignoreProjects)(configFile, [candidate.id]);
+    review.undo.push({ id: candidate.id, action: ignoring ? "ignore" : "unignore" });
+    settle(candidate, ignoring ? "ignored" : "review");
+    flash(ignoring ? `Ignored ${candidate.id}` : `${candidate.id} is back in the queue`, "ok");
+  }
+
+  async function undoDecision() {
+    const last = review.undo.pop();
+    if (!last) return flash("Nothing to undo");
+    const candidate = review.all.find((other) => other.id === last.id);
+    if (last.action === "include") {
+      await removeProject(configFile, last.id);
+      if (last.wasIgnored) await ignoreProjects(configFile, [last.id]);
+    } else {
+      await (last.action === "ignore" ? unignoreProjects : ignoreProjects)(configFile, [last.id]);
+    }
+    const status = last.action === "include" ? (last.wasIgnored ? "ignored" : "review") : last.action === "ignore" ? "review" : "ignored";
+    const keep = review.cursor;
+    settle(candidate, status);
+    const at = shown().findIndex((other) => other.id === last.id);
+    review.cursor = at >= 0 ? at : keep;
+    flash(`Undid ${last.action} of ${last.id}`, "ok");
+  }
+
+  async function reviewKey(key) {
+    const move = (to) => { review.cursor = Math.max(Math.min(to, shown().length - 1), 0); };
+    const name = key.name === "char" ? key.text : key.name;
+    switch (name) {
+      case "up": case "k": return move(review.cursor - 1);
+      case "down": case "j": return move(review.cursor + 1);
+      case "pageup": return move(review.cursor - 10);
+      case "pagedown": return move(review.cursor + 10);
+      case "home": case "g": return move(0);
+      case "end": case "G": return move(shown().length - 1);
+      case "i": return includeCandidate();
+      case "1": case "2": case "3": return includeCandidate(priorities[name]);
+      case "x": return toggleIgnore();
+      case "u": return undoDecision();
+      case "f": {
+        review.filter = reviewFilters[(reviewFilters.indexOf(review.filter) + 1) % reviewFilters.length];
+        review.cursor = 0;
+        return;
+      }
+      case "r": if (!review.roots.length) return rootsPrompt(); flash("Scanning"); track(rescan()); return;
+      case "R": return rootsPrompt();
+      case "tab": case "escape": case "backspace": return leaveReview();
+      case "q": state.quit = true; return;
+      default:
+    }
+  }
+
   async function listKey(key) {
     if (state.grab) return grabKey(key);
     const move = (to) => { state.cursor = Math.max(Math.min(to, state.rows.length - 1), 0); };
     switch (key.name === "char" ? key.text : key.name) {
       case "a": return addPrompt();
+      case "tab": return openReview();
       case "d": case "x":
         if (current()) {
           const row = current();
@@ -332,6 +476,7 @@ export function createApp({ configFile, cwd = process.cwd(), notice = null, offl
           else if (state.edit) await editKey(next);
           else if (state.confirm) await confirmKey(next);
           else if (state.screen === "detail") await detailKey(next);
+          else if (state.screen === "review") await reviewKey(next);
           else await listKey(next);
         } catch (error) {
           flash(error.message, "error");
@@ -344,7 +489,7 @@ export function createApp({ configFile, cwd = process.cwd(), notice = null, offl
 
   const idle = async () => { await queue; while (pending.size) await Promise.all([...pending]); };
 
-  return { state, load, offerHere, key, idle, render: (size) => render(state, configFile, size) };
+  return { state, load, offerHere, openReview, key, idle, render: (size) => render(state, configFile, size) };
 }
 
 // The text box for the editor in state.edit: label with counter, wrapped text, error and help. cursor.row is relative to the first line returned.
@@ -396,7 +541,62 @@ function listScreen(state, configFile, width, height) {
     lines.push("", ` ${yellow(`Moving ${titleOf(rows[state.cursor])}`)} ${dim("in portfolio.json order, which sorts projects of the same priority and tier on the site")}`);
     return { lines, cursor: null, footer: " ↑↓ move   pgup/pgdn jump 10   g/G top/bottom   m or enter drop   esc put back" };
   }
-  return { lines, cursor: null, footer: " ↑↓ select   enter open   s sort   m move   a add   d remove   r refresh   q quit" };
+  return { lines, cursor: null, footer: " ↑↓ select   enter open   s sort   m move   a add   d remove   tab review   r refresh   q quit" };
+}
+
+// "3d", "5mo", "2y": how long ago, in the fewest characters.
+export function ago(iso, now = Date.now()) {
+  if (!iso) return "-";
+  const days = Math.max(Math.floor((now - Date.parse(iso)) / 86_400_000), 0);
+  if (days < 1) return "today";
+  if (days < 60) return `${days}d`;
+  return days < 700 ? `${Math.round(days / 30)}mo` : `${Math.round(days / 365)}y`;
+}
+
+const sourceLabel = { local: "local", both: "both", github: "github" };
+
+function reviewScreen(state, configFile, width, height) {
+  const { review } = state;
+  const rows = visible(review);
+  const counts = Object.fromEntries(reviewFilters.map((name) => [name, name === "all" ? review.all.length : review.all.filter((candidate) => candidate.status === name).length]));
+  const tabs = reviewFilters.map((name) => name === review.filter ? inverse(` ${filterNames[name]} ${counts[name]} `) : dim(` ${filterNames[name]} ${counts[name]} `)).join(" ");
+  const progress = review.scanning ? yellow(review.scanning.phase === "github" ? "asking GitHub" : `scanning folders ${review.scanning.done}/${review.scanning.total}`) : dim(review.scannedAt ? `scanned ${ago(review.scannedAt) === "today" ? "today" : `${ago(review.scannedAt)} ago`}` : "not scanned yet");
+  const lines = [` ${bold("showcase")}  ${dim("review")}  ${progress}${review.roots.length ? dim(`  ${review.roots.join(", ")}`) : ""}`, ` ${tabs}`, ""];
+
+  const busy = state.edit ? 7 : state.confirm ? 2 : 0;
+  const previewHeight = busy ? 0 : 8;
+  const room = Math.max(height - lines.length - 3 - previewHeight - busy - 1, 3);
+  const first = Math.min(Math.max(review.cursor - room + 1, 0), Math.max(rows.length - room, 0));
+  const name = Math.min(Math.max(...rows.map((row) => row.id.replace(/^local:/, "").length), 7), 34);
+  if (rows.length) lines.push(dim(` ${fit("SCORE", 7)}${fit("PROJECT", name + 2)}${fit("SOURCE", 8)}${fit("ACTIVE", 8)}SIGNALS`));
+  rows.slice(first, first + room).forEach((row, offset) => {
+    const label = row.id.replace(/^local:/, "");
+    const signals = row.status === "included" ? `in portfolio${row.entry?.priority ? `, ${row.entry.priority}` : ""}` : row.status === "ignored" && review.filter === "all" ? "ignored" : row.reasons.join(", ");
+    const fixed = 7 + name + 2 + 16 + 1;
+    const plain = `${fit(row.score, 7)}${fit(label, name + 2)}${fit(sourceLabel[row.source], 8)}${fit(ago(row.lastActive), 8)}${fit(signals, Math.max(width - fixed, 10)).trimEnd()}`;
+    if (first + offset === review.cursor) return lines.push(inverse(fit(` ${plain}`, width)));
+    const style = row.status === "included" ? green : row.status === "ignored" ? dim : (value) => value;
+    lines.push(` ${dim(fit(row.score, 7))}${style(fit(label, name + 2))}${dim(fit(sourceLabel[row.source], 8))}${dim(fit(ago(row.lastActive), 8))}${dim(plain.slice(fixed - 1))}`);
+  });
+  if (!rows.length) {
+    const hint = !review.all.length ? (review.scanning ? "Looking…" : review.roots.length ? "Nothing found. Press R to change the folders, r to scan again." : "Press R to choose the folders to scan.") : review.filter === "review" ? "Nothing left to review." : "Nothing here yet.";
+    lines.push(` ${hint}`);
+  }
+  if (first + room < rows.length) lines.push(dim(` ↓ ${rows.length - first - room} more`));
+
+  const pick = rows[review.cursor];
+  if (pick && !busy) {
+    while (lines.length < height - 3 - previewHeight) lines.push("");
+    lines.push(dim(` ${"─".repeat(Math.max(width - 2, 1))}`));
+    const facts = [pick.language, pick.stars ? `★ ${pick.stars}` : null, pick.commits ? `${pick.commits} commits` : null, pick.readme ? `README ${pick.readmeWords} words` : null, pick.private ? "private" : null, pick.archived ? "archived" : null, pick.fork ? "fork" : null].filter(Boolean);
+    lines.push(` ${bold(pick.name)}  ${dim(pick.dir ? home(pick.dir) : pick.repo)}`);
+    if (pick.description) for (const [start, end] of wrap(pick.description, Math.max(width - 4, 10)).slice(0, 2)) lines.push(`   ${pick.description.slice(start, end)}`);
+    if (facts.length) lines.push(dim(`   ${facts.join(" · ")}`));
+    const link = pick.homepage ?? pick.liveUrl;
+    if (link) lines.push(`   ${dim("live")} ${link}`);
+    if (pick.repo && pick.dir) lines.push(`   ${dim("repo")} ${pick.repo}`);
+  }
+  return { lines, cursor: null, footer: " ↑↓ select   i include   1 2 3 high mid low   x ignore   u undo   f filter   r rescan   R folders   tab portfolio   q quit" };
 }
 
 // The goal comes from the portfolio priority; a ceiling in showcase.json can only lower it, never raise it.
@@ -465,17 +665,19 @@ function detailScreen(state, width, height) {
 // Draws the whole screen as lines, plus where the text cursor goes while editing.
 export function render(state, configFile, { width = 80, height = 24 } = {}) {
   let screen;
-  if (state.rows.length === 0) {
-    screen = { lines: [` ${bold("showcase")}  ${dim(home(configFile))}`, "", " No projects in this portfolio yet.", dim(" Press a and type the path to a project folder.")], cursor: null, footer: " a add   q quit" };
+  if (state.screen === "review") {
+    screen = reviewScreen(state, configFile, width, height);
+  } else if (state.rows.length === 0) {
+    screen = { lines: [` ${bold("showcase")}  ${dim(home(configFile))}`, "", " No projects in this portfolio yet.", dim(" Press tab to find projects to review, or a to add one by path.")], cursor: null, footer: " tab review   a add   q quit" };
   } else {
     screen = state.screen === "detail" ? detailScreen(state, width, height) : listScreen(state, configFile, width, height);
   }
-  if (state.screen === "list" || state.rows.length === 0) {
+  if (state.screen === "list" || state.screen === "review" || state.rows.length === 0) {
     if (state.edit) {
       const box = editorLines(state.edit, width);
       screen.cursor = { row: screen.lines.length + 1 + box.cursor.row, col: box.cursor.col };
       screen.lines.push("", ...box.lines);
-      screen.footer = " enter add   esc cancel";
+      screen.footer = " enter save   esc cancel";
     } else if (state.confirm) {
       screen.lines.push("", ` ${state.confirm.question} ${bold("y")}/n`);
       screen.footer = " y yes   any other key no";
@@ -499,6 +701,7 @@ export async function run(options) {
   };
   const cwd = process.cwd();
   let { configFile, notice } = options;
+  let fresh = false;
   if (configFile) {
     configFile = path.resolve(cwd, configFile);
     await loadEntries(configFile);
@@ -508,6 +711,7 @@ export async function run(options) {
     configFile = found.file;
     if (!found.exists) {
       const count = await createConfig(configFile, cwd);
+      fresh = true;
       notice = `Started a portfolio at ${home(configFile)} with ${count} project${count === 1 ? "" : "s"} from here. Have one already? Run showcase manage <path> once.`;
     }
   }
@@ -524,7 +728,8 @@ export async function run(options) {
 
   try {
     await app.load();
-    await app.offerHere();
+    if (fresh || app.state.rows.length === 0) await app.openReview();
+    else await app.offerHere();
   } catch (error) {
     stdin.setRawMode(false);
     stdin.pause();

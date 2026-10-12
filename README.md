@@ -17,7 +17,7 @@ showcase check ~/code/a ~/code/b --matrix   # every check against every project
 showcase init                 # draft showcase.json from the README and package.json
 showcase capture              # re-record the media with media.capture and check the loop
 showcase terminal --serve     # build the in-browser terminal demo for a CLI
-showcase manage               # browse, add and edit your projects; no setup
+showcase manage               # find, review, grade and edit your projects; no setup
 showcase guide                # how to make a project demoable, for agents and people
 ```
 
@@ -121,7 +121,19 @@ This writes `feed.json` with one entry per project: its showcase.json facts (or 
 showcase manage
 ```
 
-No setup. It opens, in this order: the path you pass (for this run only), `$SHOWCASE_CONFIG`, the nearest `portfolio.json` from the current folder upwards, then `~/.config/showcase/portfolio.json`. If there is none of those, it creates that last one from the project in the current folder (or the projects directly inside it) and says so. After that you add projects from the UI.
+No setup. It opens, in this order: the path you pass (for this run only), `$SHOWCASE_CONFIG`, the nearest `portfolio.json` from the current folder upwards, then `~/.config/showcase/portfolio.json`. If there is none of those, it creates that last one from the project in the current folder (or the projects directly inside it), asks which folders hold your projects and goes straight to the review.
+
+### Decide which projects belong
+
+`tab` switches between the portfolio and the **review**: every project showcase can find, strongest evidence first. It scans the folders in `roots` (asked the first time, saved to portfolio.json, kept as typed so `$SRC` stays `$SRC`) and your GitHub repositories through `gh` when it is installed and logged in. Without `gh` it scans folders only and says so. A project is a folder in a root, or a folder inside one (`$SRC/category/project`); a folder with a package.json, Cargo.toml or similar is one itself.
+
+Each row has a score, whether it is local, on GitHub or both, when it was last active and the evidence behind the score (README, live URL, stars, recent commits). The score only sets the order. It never decides. Keys:
+
+- `i` includes the project in the portfolio, `1` `2` `3` include it with high, mid or low priority.
+- `x` ignores it, so it never comes back for review. On an ignored project `x` brings it back. `u` undoes your last decisions, one at a time.
+- `f` cycles Needs review, In the portfolio, Ignored and All projects. `r` scans again, `R` changes the folders, `tab` or `esc` goes back to the portfolio, where the new projects are graded.
+
+The scan is kept in `~/.cache/showcase/` (safe to delete) and shown at once next time. Decisions are saved to portfolio.json as you make them: included projects in `projects`, ignored ones as ids in `ignored`.
 
 It is a full-screen list of every project with its tier, the goal its priority sets and what is still missing (`--offline` skips the live URL request). Keys:
 
@@ -141,6 +153,8 @@ showcase add --repo https://github.com/you/old --id github:you/old   # no local 
 showcase set local:notecli --priority mid
 showcase set local:notecli --stage prototype          # saved in its showcase.json
 showcase remove local:notecli                         # its files stay
+showcase discover --root ~/code                       # scan folders and GitHub; --json, --status review
+showcase ignore local:old/thing                       # decide against it; unignore puts it back
 showcase collect --out public/showcase                # no path needed either
 ```
 

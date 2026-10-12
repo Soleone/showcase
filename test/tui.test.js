@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile, stat, symlink, writeFile } from "node:fs/promises";
+import { mkdir as mkdirp, readFile, stat, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { addProject, createConfig, findConfig, sortRows } from "../src/manage.js";
@@ -355,4 +355,99 @@ test("a symlink to a project already in the portfolio is ignored, and cannot be 
   assert.match(text(app), /Ignoring local:old-demo \(same folder as local:demo\)/);
   await symlink(path.join(root, "plain"), path.join(root, "plain-link"));
   assert.deepEqual(await addProject(configFile, path.join(root, "plain-link")), { error: "local:plain already points there" });
+});
+
+async function reviewSetup() {
+  const root = await fixture({
+    "src/products/alpha/package.json": "{}",
+    "src/products/alpha/README.md": "# Alpha\n\nAlpha keeps small notes in one place for people who like order.\n",
+    "src/products/beta/package.json": "{}",
+    "src/tries/loose/package.json": "{}",
+  });
+  const configFile = path.join(root, "portfolio.json");
+  await writeFile(configFile, JSON.stringify({ projects: [] }));
+  const env = { ...process.env, XDG_CACHE_HOME: path.join(root, "cache") };
+  const app = createApp({ configFile, offline: true, fetch: okFetch, env, scanOptions: { github: false } });
+  await app.load();
+  await app.idle();
+  return { app, root, configFile, src: path.join(root, "src") };
+}
+
+test("tab opens the review screen, which asks where to look first and then scans", async () => {
+  const { app, configFile, src } = await reviewSetup();
+  await press(app, "\t");
+  assert.match(text(app), /Folders to scan for projects/);
+  await press(app, "\x15", src, "\r");
+  assert.deepEqual((await json(configFile)).roots, [src]);
+  const screen = text(app);
+  assert.match(screen, /Needs review 3\s+In the portfolio 0\s+Ignored 0\s+All projects 3/);
+  assert.match(screen, /SCORE\s+PROJECT\s+SOURCE\s+ACTIVE\s+SIGNALS/);
+  assert.match(screen, /products\/alpha\s+local\s+today\s+README/);
+  assert.match(screen, /Found 3 projects, 3 to review/);
+});
+
+test("i and 1-3 include with a priority, x ignores, u undoes, and the portfolio list follows", async () => {
+  const { app, configFile, src } = await reviewSetup();
+  await press(app, "\t", "\x15", src, "\r");
+  const ids = () => app.state.review.all.filter((candidate) => candidate.status === "review").map((candidate) => candidate.id);
+  assert.equal(ids()[0], "local:products/alpha", "the one with a README comes first");
+  await press(app, "1");
+  let config = await json(configFile);
+  assert.deepEqual(config.projects.map(({ id, priority, path: where }) => [id, priority, where]), [["local:products/alpha", "high", "src/products/alpha"]]);
+  assert.match(text(app), /Added local:products\/alpha with high priority/);
+  await press(app, "x");
+  assert.deepEqual((await json(configFile)).ignored, ["local:products/beta"]);
+  await press(app, "i");
+  assert.deepEqual((await json(configFile)).projects.map((entry) => [entry.id, entry.priority]), [["local:products/alpha", "high"], ["local:tries/loose", null]]);
+  assert.match(text(app), /Needs review 0/);
+  assert.match(text(app), /Nothing left to review/);
+
+  await press(app, "u");
+  assert.deepEqual((await json(configFile)).projects.map((entry) => entry.id), ["local:products/alpha"]);
+  assert.equal(app.state.review.all.find((candidate) => candidate.id === "local:tries/loose").status, "review");
+  await press(app, "u", "u");
+  config = await json(configFile);
+  assert.equal(config.projects.length, 0);
+  assert.equal("ignored" in config, false);
+  assert.match(text(app), /Needs review 3/);
+  await press(app, "u");
+  assert.match(text(app), /Nothing to undo/);
+
+  await press(app, "i", "\t");
+  assert.equal(app.state.screen, "list");
+  assert.match(text(app), /1 project/);
+  assert.match(text(app), /products\/alpha\s+other/);
+});
+
+test("the filters show what was decided, an ignored project can be included, and a portfolio project cannot be ignored here", async () => {
+  const { app, configFile, src } = await reviewSetup();
+  await press(app, "\t", "\x15", src, "\r");
+  await press(app, "i", "x");
+  await press(app, "f");
+  assert.match(text(app), /In the portfolio 1/);
+  assert.match(text(app), /products\/alpha\s+local\s+today\s+in portfolio/);
+  await press(app, "x");
+  assert.match(text(app), /In the portfolio already/);
+  await press(app, "f");
+  assert.match(text(app), /products\/beta/);
+  await press(app, "x");
+  assert.equal("ignored" in (await json(configFile)), false, "x on an ignored project brings it back");
+  await press(app, "f", "f");
+  assert.equal(app.state.review.filter, "review");
+  await press(app, "f", "f", "f");
+  assert.equal(app.state.review.filter, "all");
+  assert.match(text(app), /products\/alpha\s+local\s+today\s+in portfolio/);
+  assert.match(text(app), /products\/beta\s+local\s+today\s+active/);
+});
+
+test("a second visit shows the saved scan at once, and r scans again", async () => {
+  const { app, src } = await reviewSetup();
+  await press(app, "\t", "\x15", src, "\r");
+  await press(app, "\t");
+  await mkdirp(path.join(src, "products/gamma"));
+  await writeFile(path.join(src, "products/gamma/package.json"), "{}");
+  await press(app, "\t");
+  assert.match(text(app), /Needs review 3/);
+  await press(app, "r");
+  assert.match(text(app), /Needs review 4/);
 });

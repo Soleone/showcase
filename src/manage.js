@@ -286,6 +286,14 @@ export function storedPath(dir, configFile) {
 
 const entryFor = (dir, configFile, id) => ({ id, priority: null, path: storedPath(dir, configFile) });
 
+// Adding a project is a decision to include it, so it stops being ignored.
+const unignored = (config, id) => {
+  if (!config.ignored?.includes(id)) return config;
+  const { ignored, ...rest } = config;
+  const remaining = ignored.filter((other) => other !== id);
+  return remaining.length ? { ...rest, ignored: remaining } : rest;
+};
+
 // The config entry that points at this folder, if any. A symlink to the folder counts as the folder.
 async function entryAt(config, configFile, dir, env) {
   const base = path.dirname(path.resolve(configFile));
@@ -337,10 +345,11 @@ export async function addProject(configFile, input, { cwd = process.cwd(), env =
   // A path typed with ~ or $VAR stays that way, so the config does not hard-code this machine's folders.
   if (/^[~$]/.test(input.trim())) entry.path = input.trim();
   entry.priority = priority;
+  if (repo) entry.repo = repo;
   const errors = validate({ projects: [entry] }, portfolioSchema);
   if (errors.length) return { error: errors.map((error) => error.replace(/^projects\[0\]\./, "")).join("; ") };
   config.projects.push(entry);
-  await writeJson(configFile, config);
+  await writeJson(configFile, unignored(config, id));
   return { id };
 }
 
@@ -355,7 +364,7 @@ async function addRemote(configFile, { id, priority, repo }) {
   const errors = validate({ projects: [entry] }, portfolioSchema);
   if (errors.length) return { error: errors.map((error) => error.replace(/^projects\[0\]\./, "")).join("; ") };
   config.projects.push(entry);
-  await writeJson(configFile, config);
+  await writeJson(configFile, unignored(config, id));
   return { id };
 }
 
@@ -364,6 +373,35 @@ export async function removeProject(configFile, id) {
   const config = await readJson(configFile);
   config.projects = config.projects.filter((entry) => entry.id !== id);
   await writeJson(configFile, config);
+}
+
+// Marks discovered projects as decided against, so they leave the review queue. An id in the portfolio is not ignored:
+// remove it first. Returns the ids that were newly ignored.
+export async function ignoreProjects(configFile, ids) {
+  const config = await readJson(configFile);
+  const taken = new Set(config.projects.map((entry) => entry.id));
+  const fresh = [...new Set(ids)].filter((id) => !(config.ignored ?? []).includes(id) && !taken.has(id));
+  if (fresh.length) await writeJson(configFile, { ...config, ignored: [...(config.ignored ?? []), ...fresh] });
+  return fresh;
+}
+
+// Puts ignored projects back in the review queue. Returns the ids that were ignored.
+export async function unignoreProjects(configFile, ids) {
+  let config = await readJson(configFile);
+  const was = (config.ignored ?? []).filter((id) => ids.includes(id));
+  for (const id of was) config = unignored(config, id);
+  if (was.length) await writeJson(configFile, config);
+  return was;
+}
+
+// The folders to scan for projects, as typed (so $SRC stays $SRC). An empty list removes the key.
+export async function setRoots(configFile, roots) {
+  const { roots: _, ...config } = await readJson(configFile);
+  const candidate = roots.length ? { ...config, roots } : config;
+  const errors = validate(candidate, portfolioSchema);
+  if (errors.length) return { errors };
+  await writeJson(configFile, candidate);
+  return { errors: [] };
 }
 
 // A starter config from whatever is in this folder. An empty portfolio is valid too.

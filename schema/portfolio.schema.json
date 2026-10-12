@@ -11,6 +11,16 @@
   },
   "properties": {
     "$schema": { "type": "string" },
+    "roots": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Folders showcase scans for projects to review. ~ and $VARS are expanded. Each project is a folder in one of them, or in a folder inside one (like $SRC/category/project)."
+    },
+    "ignored": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Ids of discovered projects you decided against, so they stop coming back for review."
+    },
     "projects": {
       "type": "array",
       "items": {
