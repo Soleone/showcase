@@ -18,13 +18,16 @@ showcase init                 # draft showcase.json from the README and package.
 showcase capture              # re-record the media with media.capture and check the loop
 showcase terminal --serve     # build the in-browser terminal demo for a CLI
 showcase manage               # browse, add and edit your projects; no setup
+showcase guide                # how to make a project demoable, for agents and people
 ```
 
 No dependencies; needs Node 22 or later.
 
 ## With an agent
 
-The package includes a `showcase` skill for coding agents. It does the parts `check` cannot measure (the pitch, the demo strategy, sample data, the recording), runs `check` before and after each step, and asks before anything that publishes.
+The CLI teaches an agent how to use it, so there is nothing to install beyond showcase. Tell your agent to run `showcase guide` (or `npx @soleone/showcase guide`), or add that line to your AGENTS.md. It prints the loop, the tiers and what to ask you first, plus a list of topics (`showcase guide media`, `terminal`, `portfolio` and more) that the agent reads only when a step needs one. Every failing check names the topic that helps.
+
+If you would rather have your agent find it by itself, the package also ships a tiny `showcase` skill that only says "run `showcase guide`":
 
 ```sh
 pi install npm:@soleone/showcase                          # pi
@@ -32,7 +35,7 @@ pi install npm:@soleone/showcase                          # pi
 npx skills add Soleone/showcase                           # other agents
 ```
 
-Then ask your agent to make a project demoable, or to take it up a tier.
+Then ask your agent to make a project demoable, or to take it up a tier. The text is in [docs/guide](docs/guide/index.md).
 
 ## Tiers
 
@@ -156,7 +159,7 @@ await record({
 });
 ```
 
-[docs/playbook.md](docs/playbook.md) has what to watch for when recording, and the rest of what it took to get projects to S.
+`showcase guide media` ([docs/guide/media.md](docs/guide/media.md)) has what to watch for when recording.
 
 ## Try a CLI in the browser
 

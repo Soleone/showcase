@@ -4,6 +4,7 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { evaluate, tiers } from "../src/checks.js";
 import { collect } from "../src/collect.js";
+import { guide } from "../src/guide.js";
 import { init } from "../src/init.js";
 import { addProject, findConfig, manifestFields, openRow, portfolioFields, removeProject, setManifestField, setPortfolioField, stageOf } from "../src/manage.js";
 import { inspectMotion, runCapture } from "../src/inspect.js";
@@ -33,6 +34,8 @@ Usage:
   showcase capture [path]    Re-record the media with media.capture, then check media.motion
   showcase terminal [recipe] Build the in-browser terminal demo for a CLI from a folder
                              with terminal.json (default demo/browser)
+  showcase guide [topic]     How to make a project demoable, written for agents and people;
+                             start with no topic, every failing check names the one it needs
 
 Options:
   --json         Machine-readable output (check)
@@ -192,6 +195,10 @@ async function main() {
     return manage({ configFile: paths[0], offline: values.offline });
   }
   if (command === "terminal") return terminal(paths, values);
+  if (command === "guide") {
+    if (paths.length > 1) throw new Error("guide takes a single topic");
+    return console.log(await guide(paths[0]));
+  }
   if (command === "init") {
     if (paths.length > 1) throw new Error("init takes a single path");
     const { file, manifest, errors } = await init(paths[0] ?? ".", { force: values.force, dryRun: values["dry-run"] });

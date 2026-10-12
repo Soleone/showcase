@@ -62,6 +62,7 @@ const noReadme = fail("no README");
 export const checks = [
   {
     id: "readme",
+    guide: "pitch",
     tier: "C",
     label: "README present",
     run: (project) => project.readme ? pass(path.relative(project.root, project.readme.file)) : fail("no README found"),
@@ -69,6 +70,7 @@ export const checks = [
   },
   {
     id: "readme.substance",
+    guide: "pitch",
     tier: "C",
     label: "README explains the project",
     run: ({ readme }) => !readme ? noReadme : readme.words >= 80 ? pass(`${readme.words} words`) : fail(`${readme.words} words, needs at least 80`),
@@ -76,6 +78,7 @@ export const checks = [
   },
   {
     id: "readme.usage",
+    guide: "pitch",
     tier: "C",
     label: "README shows how to run it",
     run: ({ readme }) => {
@@ -88,6 +91,7 @@ export const checks = [
   },
   {
     id: "readme.pitch",
+    guide: "pitch",
     tier: "B",
     label: "Pitch right under the title",
     run: ({ readme }) => {
@@ -103,6 +107,7 @@ export const checks = [
   },
   {
     id: "readme.hero",
+    guide: "pitch",
     tier: "B",
     label: "Hero visual before the first section",
     run: ({ readme }) => {
@@ -115,6 +120,7 @@ export const checks = [
   },
   {
     id: "readme.concise",
+    guide: "pitch",
     tier: "B",
     label: `README is concise (at most ${maxReadmeWords} words of prose)`,
     run: ({ readme }) => !readme ? noReadme : readme.words <= maxReadmeWords ? pass(`${readme.words} words`) : fail(`${readme.words} words`),
@@ -122,6 +128,7 @@ export const checks = [
   },
   {
     id: "readme.links",
+    guide: "pitch",
     tier: "B",
     label: "Local links and images resolve",
     run: async (project) => {
@@ -135,6 +142,7 @@ export const checks = [
   },
   {
     id: "manifest",
+    guide: "manifest",
     tier: "A",
     label: "showcase.json is valid",
     run: async (project) => {
@@ -148,6 +156,7 @@ export const checks = [
   },
   {
     id: "media.motion",
+    guide: "media",
     tier: "A",
     label: "Motion: looping WebP, GIF or video",
     run: async (project) => {
@@ -163,6 +172,7 @@ export const checks = [
   },
   {
     id: "demo.local",
+    guide: "demo",
     tier: "A",
     label: "One-command local demo",
     run: (project) => {
@@ -173,6 +183,7 @@ export const checks = [
   },
   {
     id: "demo.externals",
+    guide: "manifest",
     tier: "A",
     required: false,
     label: "Externals have stand-ins",
@@ -186,6 +197,7 @@ export const checks = [
   },
   {
     id: "media.capture",
+    guide: "media",
     tier: "A",
     required: false,
     label: "Media can be regenerated",
@@ -197,6 +209,7 @@ export const checks = [
   },
   {
     id: "live",
+    guide: (project) => project.kind === "cli" ? "terminal" : "demo",
     tier: "S",
     label: "Live: one click to try it for real",
     run: async (project, options) => {
@@ -221,7 +234,9 @@ export async function evaluate(project, options = {}) {
   const results = [];
   for (const check of checks) {
     const result = await check.run(project, options);
-    results.push({ id: check.id, tier: check.tier, label: check.label, required: check.required !== false, ...result, hint: result.status === "pass" ? null : check.hint(project, result) });
+    const failing = result.status !== "pass";
+    const guide = typeof check.guide === "function" ? check.guide(project) : check.guide;
+    results.push({ id: check.id, tier: check.tier, label: check.label, required: check.required !== false, ...result, hint: failing ? check.hint(project, result) : null, guide: failing ? guide : null });
   }
 
   let tier = "D";

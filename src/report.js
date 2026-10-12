@@ -29,7 +29,7 @@ export function formatReport(report, { verbose = false } = {}) {
   if (report.nextSteps.length) {
     lines.push("", `  To reach ${tierLabel(report.next)}:`);
     for (const step of report.nextSteps) {
-      lines.push(`  ${mark(step)} ${step.label}${step.required ? "" : dim(" (advice)")}  ${dim(step.detail)}`, `    ${step.hint}`);
+      lines.push(`  ${mark(step)} ${step.label}${step.required ? "" : dim(" (advice)")}  ${dim(step.detail)}`, `    ${step.hint} ${dim(`(showcase guide ${step.guide})`)}`);
     }
   }
   return lines.join("\n");
