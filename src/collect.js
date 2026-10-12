@@ -26,7 +26,7 @@ export async function loadPortfolio(file) {
 export function resolvePath(raw, base, env = process.env) {
   const missing = [];
   const expanded = raw
-    .replace(/^~(?=$|\/)/, os.homedir())
+    .replace(/^~(?=$|\/)/, env.HOME || os.homedir())
     .replace(/\$(?:\{(\w+)\}|(\w+))/g, (_, braced, bare) => {
       const name = braced ?? bare;
       if (env[name] === undefined) missing.push(name);

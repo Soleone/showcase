@@ -291,13 +291,23 @@ export function createApp({ configFile, cwd = process.cwd(), notice = null, offl
     }
   }
 
-  function rootsPrompt() {
-    const text = (review.roots.length ? review.roots : suggestRoots(env)).join(", ");
+  // Asks where projects live. Nothing is guessed: the home folders that hold projects are offered by number,
+  // and any path can be typed instead.
+  async function rootsPrompt() {
+    const suggestions = await suggestRoots(env.HOME || undefined);
+    const text = review.roots.join(", ");
     state.edit = {
-      label: "Folders to scan for projects", help: "Comma separated. Each project is a folder in one of them, or in a folder inside one, like $SRC/category/project. GitHub is scanned too when gh is logged in.", text, pos: text.length, error: null,
+      label: "Where do your projects live?", text, pos: text.length, error: null,
+      help: "Type a folder, like ~/code or /work/src, or a number from the list. Separate several with commas. Each project is a folder in one of them, or in a folder inside one (category/project). GitHub is scanned too when gh is logged in.",
+      extra: suggestions.length ? ["Found in your home folder:", ...suggestions.slice(0, 9).map((suggestion, i) => `${i + 1}  ${suggestion.path}  ${suggestion.count} project${suggestion.count === 1 ? "" : "s"}`)] : ["No project folders found in your home folder, so type a path."],
       submit: async (typed) => {
-        const roots = typed.split(",").map((root) => root.trim()).filter(Boolean);
-        if (!roots.length) return "Type at least one folder";
+        const roots = [];
+        for (const token of typed.split(",").map((root) => root.trim()).filter(Boolean)) {
+          const picked = /^\d+$/.test(token) ? suggestions[Number(token) - 1] : null;
+          if (/^\d+$/.test(token) && !picked) return `There is no number ${token} in the list`;
+          roots.push(picked ? picked.path : token);
+        }
+        if (!roots.length) return "Type a folder or a number from the list";
         const { errors } = await setRoots(configFile, roots);
         if (errors.length) return errors[0];
         review.roots = roots;
@@ -501,6 +511,7 @@ function editorLines(edit, width) {
   const lines = [` ${bold(edit.label)}${edit.max ? dim(`  ${text.length}/${edit.max}`) : ""}`, ...ranges.map(([start, end]) => `   ${text.slice(start, end)}`)];
   if (edit.error) lines.push(` ${red(edit.error)}`);
   if (edit.help) for (const [start, end] of wrap(edit.help, Math.max(width - 4, 10))) lines.push(muted(`   ${edit.help.slice(start, end)}`));
+  for (const line of edit.extra ?? []) lines.push(`   ${line}`);
   return { lines, cursor: { row: 1 + index, col: at - ranges[index][0] + 3 } };
 }
 
@@ -563,7 +574,7 @@ function reviewScreen(state, configFile, width, height) {
   const progress = review.scanning ? yellow(review.scanning.phase === "github" ? "asking GitHub" : `scanning folders ${review.scanning.done}/${review.scanning.total}`) : dim(review.scannedAt ? `scanned ${ago(review.scannedAt) === "today" ? "today" : `${ago(review.scannedAt)} ago`}` : "not scanned yet");
   const lines = [` ${bold("showcase")}  ${dim("review")}  ${progress}${review.roots.length ? dim(`  ${review.roots.join(", ")}`) : ""}`, ` ${tabs}`, ""];
 
-  const busy = state.edit ? 7 : state.confirm ? 2 : 0;
+  const busy = state.edit ? 14 : state.confirm ? 2 : 0;
   const previewHeight = busy ? 0 : 8;
   const room = Math.max(height - lines.length - 3 - previewHeight - busy - 1, 3);
   const first = Math.min(Math.max(review.cursor - room + 1, 0), Math.max(rows.length - room, 0));

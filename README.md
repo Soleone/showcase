@@ -125,7 +125,7 @@ No setup. It opens, in this order: the path you pass (for this run only), `$SHOW
 
 ### Decide which projects belong
 
-`tab` switches between the portfolio and the **review**: every project showcase can find, strongest evidence first. It scans the folders in `roots` (asked the first time, saved to portfolio.json, kept as typed so `$SRC` stays `$SRC`) and your GitHub repositories through `gh` when it is installed and logged in. Without `gh` it scans folders only and says so. A project is a folder in a root, or a folder inside one (`$SRC/category/project`); a folder with a package.json, Cargo.toml or similar is one itself.
+`tab` switches between the portfolio and the **review**: every project showcase can find, strongest evidence first. It scans the folders in `roots` (asked the first time, never guessed: the prompt starts empty, lists the folders in your home directory that hold projects to pick by number, and takes any path you type; saved to portfolio.json as typed, so `$SRC` stays `$SRC`) and your GitHub repositories through `gh` when it is installed and logged in. Without `gh` it scans folders only and says so. A project is a folder in a root, or a folder inside one (`$SRC/category/project`); a folder with a package.json, Cargo.toml or similar is one itself.
 
 Each row has a score, whether it is local, on GitHub or both, when it was last active and the evidence behind the score (README, live URL, stars, recent commits). The score only sets the order. It never decides. Keys:
 

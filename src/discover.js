@@ -314,11 +314,19 @@ export async function discover(configFile, { env = process.env, ...options } = {
   return { ...result, candidates: await classify(result.candidates, config, baseOf(configFile), env) };
 }
 
-// Where projects usually live, for the question "which folders should I scan?": $SRC, else the first common name that exists.
-export function suggestRoots(env = process.env) {
-  if (env.SRC && existsSync(env.SRC)) return ["$SRC"];
-  for (const name of ["src", "code", "projects", "Projects", "dev", "repos"]) {
-    if (existsSync(path.join(os.homedir(), name))) return [`~/${name}`];
+// Folders that are not where someone keeps projects, however many manifests turn up inside them.
+const notProjectHomes = new Set(["desktop", "documents", "downloads", "music", "pictures", "videos", "movies", "public", "templates", "applications", "library", "snap", "appdata", "bin", "lib", "opt", "tmp", "go", "node_modules"]);
+
+// Folders in the home directory that hold projects, most first, to offer when asking where projects live.
+// Dot folders and the standard ones are skipped. Each is { path: "~/src", dir, count }.
+export async function suggestRoots(home = os.homedir()) {
+  const found = [];
+  for (const name of await subfolders(home)) {
+    if (notProjectHomes.has(name.toLowerCase())) continue;
+    const dir = path.join(home, name);
+    if (!(await isDirectory(dir))) continue;
+    const count = (await projectFolders(dir)).length;
+    if (count) found.push({ path: `~/${name}`, dir, count });
   }
-  return ["~"];
+  return found.sort((a, b) => b.count - a.count || a.path.localeCompare(b.path));
 }

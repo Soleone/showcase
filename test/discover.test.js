@@ -5,7 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { cachePath, classify, discover, githubName, liveUrls, projectFolders, reviewList, scan, score } from "../src/discover.js";
+import { cachePath, classify, discover, githubName, liveUrls, projectFolders, reviewList, scan, score, suggestRoots } from "../src/discover.js";
 import { addProject, ignoreProjects, setRoots, unignoreProjects } from "../src/manage.js";
 import { fixture } from "./helpers.js";
 
@@ -189,4 +189,13 @@ test("the CLI discovers, lists by status, ignores and un-ignores", async () => {
   assert.deepEqual(listed.map((candidate) => candidate.id).sort(), ["local:solo", "local:tries/loose"]);
   assert.match((await run("unignore", "local:solo")).stdout, /Back in the review queue: local:solo/);
   assert.equal((await run("discover", "--status", "other")).code, 2);
+});
+
+test("suggestRoots offers home folders that hold projects, most first, skipping dot and standard folders", async () => {
+  const home = await fixture({
+    "src/a/package.json": "{}", "src/b/package.json": "{}", "code/c/package.json": "{}",
+    "Documents/d/package.json": "{}", ".config/e/package.json": "{}", "empty/readme.txt": "x", "notes.txt": "x",
+  });
+  assert.deepEqual((await suggestRoots(home)).map(({ path: where, count }) => [where, count]), [["~/src", 2], ["~/code", 1]]);
+  assert.deepEqual(await suggestRoots(path.join(home, "nope")), []);
 });

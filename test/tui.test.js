@@ -366,7 +366,7 @@ async function reviewSetup() {
   });
   const configFile = path.join(root, "portfolio.json");
   await writeFile(configFile, JSON.stringify({ projects: [] }));
-  const env = { ...process.env, XDG_CACHE_HOME: path.join(root, "cache") };
+  const env = { ...process.env, HOME: root, XDG_CACHE_HOME: path.join(root, "cache") };
   const app = createApp({ configFile, offline: true, fetch: okFetch, env, scanOptions: { github: false } });
   await app.load();
   await app.idle();
@@ -376,7 +376,7 @@ async function reviewSetup() {
 test("tab opens the review screen, which asks where to look first and then scans", async () => {
   const { app, configFile, src } = await reviewSetup();
   await press(app, "\t");
-  assert.match(text(app), /Folders to scan for projects/);
+  assert.match(text(app), /Where do your projects live\?/);
   await press(app, "\x15", src, "\r");
   assert.deepEqual((await json(configFile)).roots, [src]);
   const screen = text(app);
@@ -450,4 +450,26 @@ test("a second visit shows the saved scan at once, and r scans again", async () 
   assert.match(text(app), /Needs review 3/);
   await press(app, "r");
   assert.match(text(app), /Needs review 4/);
+});
+
+test("the folders prompt starts empty, offers the home folders that hold projects, and takes a number or any path", async () => {
+  const { app, configFile, src, root } = await reviewSetup();
+  await mkdirp(path.join(root, "Documents/thing"), { recursive: true });
+  await writeFile(path.join(root, "Documents/thing/package.json"), "{}");
+  await mkdirp(path.join(root, "work/one"), { recursive: true });
+  await writeFile(path.join(root, "work/one/package.json"), "{}");
+  await press(app, "\t");
+  const screen = text(app);
+  assert.match(screen, /Where do your projects live\?\n\s*\n/, "nothing is prefilled");
+  assert.match(screen, /Found in your home folder:\n\s+1\s+~\/src\s+3 projects\n\s+2\s+~\/work\s+1 project\n/);
+  assert.doesNotMatch(screen, /Documents/);
+  await press(app, "9", "\r");
+  assert.match(text(app), /There is no number 9 in the list/);
+  await press(app, "\x15", `1, ${path.join(root, "elsewhere")}`, "\r");
+  assert.deepEqual((await json(configFile)).roots, ["~/src", path.join(root, "elsewhere")]);
+  assert.match(text(app), /Needs review 3/);
+  assert.match(text(app), /is not a folder/);
+  await press(app, "R");
+  assert.match(text(app), /~\/src, .*elsewhere/);
+  assert.ok(src);
 });
