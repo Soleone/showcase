@@ -8,6 +8,7 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 export const topics = [
   { name: "pitch", file: "docs/guide/pitch.md", summary: "the README, the pitch and the hero visual (C and B)" },
   { name: "manifest", file: "docs/guide/manifest.md", summary: "showcase.json: kind, description, demo.externals, ceiling (A)" },
+  { name: "brand", file: "docs/guide/brand.md", summary: "brand: icon, logo, wordmark and colors, and where a favicon comes from (not graded)" },
   { name: "demo", file: "docs/guide/demo.md", summary: "the demo route for each kind, sample data, seeding a web app, hosting (A and S)" },
   { name: "media", file: "docs/guide/media.md", summary: "motion: scripting and checking the recording (A)" },
   { name: "terminal", file: "recipes/browser-terminal/README.md", summary: "the S route for a CLI: the in-browser terminal and terminal.json" },

@@ -34,6 +34,7 @@ export function validate(value, node = schema, path = "") {
     if (node.minLength !== undefined && value.length < node.minLength) errors.push(`${at}: must not be empty`);
     if (node.maxLength !== undefined && value.length > node.maxLength) errors.push(`${at}: ${value.length} characters, max ${node.maxLength}`);
     if (node.format === "uri" && !isUri(value)) errors.push(`${at}: must be an http(s) URL`);
+    if (node.pattern && !new RegExp(node.pattern).test(value)) errors.push(`${at}: must match ${node.pattern}`);
   }
   if (typeof value === "number") {
     if (node.minimum !== undefined && value < node.minimum) errors.push(`${at}: must be at least ${node.minimum}`);

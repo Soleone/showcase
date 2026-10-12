@@ -73,6 +73,10 @@ The project's facts for any portfolio to use. How much a portfolio cares about t
     "video": "docs/media/demo.mp4",
     "capture": "npm run demo:capture"
   },
+  "brand": {
+    "icon": "docs/brand/icon.svg",
+    "colors": ["#5b8def", "#222222"]
+  },
   "demo": {
     "strategy": "browser-terminal",
     "local": "npm run demo",
@@ -85,6 +89,8 @@ The project's facts for any portfolio to use. How much a portfolio cares about t
 ```
 
 `pitch` is the one-sentence subtitle. `description` goes further (how it works, what sets it apart) without repeating the pitch, so a portfolio can show both, for example a card with the pitch on its front and the description on its back.
+
+`brand` (`icon`, `logo`, `wordmark`, `colors`) is optional and never changes the tier; a web app, desktop app or extension without `brand.icon` gets advice, since it needs one for its favicon.
 
 `demo.externals` makes explicit what the project needs that a demo cannot reach (a model, an account, hardware, a service, another app), where a stand-in plugs in without changing the code (`seam`), and which stand-in the demo uses: `canned`, `replay`, `simulated`, `bring-your-own`, `real` or `omitted`. `[]` says there are none. Demo pages use each `note` to tell visitors what is not real.
 
@@ -107,7 +113,7 @@ A portfolio picks its projects in `portfolio.json`, in the order it shows them (
 showcase collect portfolio.json --out public/showcase
 ```
 
-This writes `feed.json` with one entry per project: its showcase.json facts (or a draft from the README when it has none), `tier`, `target` and `gap`, the required checks still failing up to the target. Priority sets the target: high S, mid A, low C, capped by `ceiling`. Local media is copied to `media/<slug>/` and the feed points at the copies. Projects without a local path are listed ungraded.
+This writes `feed.json` with one entry per project: its showcase.json facts (or a draft from the README when it has none), `tier`, `target` and `gap`, the required checks still failing up to the target. Priority sets the target: high S, mid A, low C, capped by `ceiling`. Local media is copied to `media/<slug>/` and brand files to `brand/<slug>/`, and the feed points at the copies. Projects without a local path are listed ungraded.
 
 ## Browse and edit your projects
 

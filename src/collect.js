@@ -73,28 +73,40 @@ export function gapTo(report, target) {
 // Only letters, digits, _ and -, so a slug can never climb out of media/.
 const slugOf = (id) => id.replace(/^[a-z]+:/i, "").replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase() || "project";
 
-// Copies local media into <out>/media/<slug>/ and points the manifest at the copies. Remote URLs stay as they are.
-async function copyMedia(project, media, out, slug, warn) {
-  if (!media) return undefined;
-  const folder = path.join(out, "media", slug);
+// Copies local files into <out>/<area>/<slug>/ and returns where each landed, relative to <out>. Remote URLs stay as they are.
+async function copyFiles(project, entries, out, area, slug, warn, label) {
+  const folder = path.join(out, area, slug);
   await rm(folder, { recursive: true, force: true });
-  const entries = [["hero", media.hero], ["motion", media.motion], ["video", media.video], ...(media.screenshots ?? []).map((src, index) => [`screenshot-${index + 1}`, src])];
   const copied = {};
   for (const [name, src] of entries) {
     if (typeof src !== "string") continue;
     const file = localPath(project, src);
     if (!file || !(await exists(file))) {
       if (/^https?:/i.test(src)) copied[name] = src;
-      else warn(`media not found: ${src}`);
+      else warn(`${label} not found: ${src}`);
       continue;
     }
     const target = `${name}${path.extname(file).toLowerCase()}`;
     await mkdir(folder, { recursive: true });
     await copyFile(file, path.join(folder, target));
-    copied[name] = `media/${slug}/${target}`;
+    copied[name] = `${area}/${slug}/${target}`;
   }
+  return copied;
+}
+
+async function copyMedia(project, media, out, slug, warn) {
+  if (!media) return undefined;
+  const entries = [["hero", media.hero], ["motion", media.motion], ["video", media.video], ...(media.screenshots ?? []).map((src, index) => [`screenshot-${index + 1}`, src])];
+  const copied = await copyFiles(project, entries, out, "media", slug, warn, "media");
   const screenshots = Object.keys(copied).filter((key) => key.startsWith("screenshot-")).map((key) => copied[key]);
   const result = { hero: copied.hero, motion: copied.motion, video: copied.video, screenshots: screenshots.length ? screenshots : undefined, capture: media.capture };
+  return Object.values(result).some(Boolean) ? result : undefined;
+}
+
+async function copyBrand(project, brand, out, slug, warn) {
+  if (!brand) return undefined;
+  const copied = await copyFiles(project, ["icon", "logo", "wordmark"].map((key) => [key, brand[key]]), out, "brand", slug, warn, "brand file");
+  const result = { ...copied, colors: brand.colors };
   return Object.values(result).some(Boolean) ? result : undefined;
 }
 
@@ -118,7 +130,7 @@ async function collectOne(entry, base, out, options) {
   const { project, manifest: draft } = await draftManifest(root);
   const declared = project.manifest?.errors.length === 0 ? project.manifest.data : null;
   if (project.manifest && !declared) warn("showcase.json is invalid, using a draft from the README");
-  const { $schema, ceiling, media, ...facts } = declared ?? draft;
+  const { $schema, ceiling, media, brand, ...facts } = declared ?? draft;
   const report = await evaluate(project, options);
   const target = targetTier(listing.priority, ceiling);
   return {
@@ -129,6 +141,7 @@ async function collectOne(entry, base, out, options) {
       ...facts,
       repo: facts.repo ?? entry.repo ?? undefined,
       media: await copyMedia(project, media, out, slug, warn),
+      brand: await copyBrand(project, brand, out, slug, warn),
       tier: report.tier,
       target,
       gap: gapTo(report, target),
@@ -137,7 +150,7 @@ async function collectOne(entry, base, out, options) {
   };
 }
 
-// Reads a portfolio config, grades every project and writes <out>/feed.json plus copies of the local media.
+// Reads a portfolio config, grades every project and writes <out>/feed.json plus copies of the local media and brand files.
 export async function collect(configFile, { out, ...options }) {
   options = { fetch: globalThis.fetch, ...options };
   const config = await loadPortfolio(configFile);

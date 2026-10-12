@@ -51,6 +51,21 @@
         "capture": { "type": "string", "minLength": 1, "description": "Command that regenerates the media from scratch." }
       }
     },
+    "brand": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "How the project looks as itself, for a favicon, a card or a project page. Not graded.",
+      "properties": {
+        "icon": { "type": "string", "minLength": 1, "description": "Square mark that works from 16 to 512 px (SVG preferred). The favicon source. Path relative to the project root or a URL." },
+        "logo": { "type": "string", "minLength": 1, "description": "Full lockup (icon and name) for wide spots such as a project page header." },
+        "wordmark": { "type": "string", "minLength": 1, "description": "The name set in its own lettering, without the icon." },
+        "colors": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+          "description": "Brand colors as #rrggbb, primary first. A portfolio tints a card with the first."
+        }
+      }
+    },
     "demo": {
       "type": "object",
       "additionalProperties": false,

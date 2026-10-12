@@ -24,14 +24,14 @@ showcase add --repo https://github.com/you/old --id github:you/old   # no local 
 showcase set local:notecli --priority mid             # high, mid, low, or none
 showcase set local:notecli --stage prototype          # saved in its showcase.json
 showcase remove local:notecli                         # its files stay
-showcase collect --out public/showcase                # writes feed.json and copies local media
+showcase collect --out public/showcase                # writes feed.json and copies local media and brand files
 ```
 
 Edit portfolio.json through these, not by hand, so the diff stays one line. Do not run `showcase manage`: it is a full-screen interface for a person. Agents use `list`, `add`, `set` and `remove`.
 
 ## Priority sets the goal
 
-Priority sets a project's target tier: high is S, mid is A, low is C, capped by the project's `ceiling`. `collect` writes `feed.json` with one entry per project: its showcase.json facts (or a draft from the README when it has none, marked `source: "draft"`), `tier`, `target` and `gap`, the required checks still failing up to the target. Projects without a local path are listed ungraded. Local media is copied to `media/<slug>/` and the feed points at the copies.
+Priority sets a project's target tier: high is S, mid is A, low is C, capped by the project's `ceiling`. `collect` writes `feed.json` with one entry per project: its showcase.json facts (or a draft from the README when it has none, marked `source: "draft"`), `tier`, `target` and `gap`, the required checks still failing up to the target. Projects without a local path are listed ungraded. Local media is copied to `media/<slug>/` and brand files to `brand/<slug>/`, and the feed points at the copies.
 
 To find what to work on, read `list --json` and run `showcase check <paths> --matrix` over the local projects; the largest gap to target is the next job.
 

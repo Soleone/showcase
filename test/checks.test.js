@@ -72,6 +72,24 @@ test("manifest media must exist and the manifest must validate", async () => {
   assert.match(invalid.checks.find((check) => check.id === "manifest").detail, /invalid JSON/);
 });
 
+test("brand.icon is advice for kinds that need a favicon and never changes the tier", async () => {
+  const advice = (report) => report.checks.find((check) => check.id === "brand.icon");
+  const cli = await grade({ ...polishedFiles, "showcase.json": manifest });
+  assert.deepEqual([advice(cli).status, advice(cli).required, cli.tier], ["pass", false, "A"]);
+  assert.match(advice(cli).detail, /not needed for a cli/);
+
+  const web = await grade({ ...polishedFiles, "showcase.json": { ...manifest, kind: "web-app" } });
+  assert.deepEqual([advice(web).status, advice(web).guide, web.tier], ["fail", "brand", "A"]);
+
+  const branded = await grade({ ...polishedFiles, "icon.svg": "<svg/>", "showcase.json": { ...manifest, kind: "web-app", brand: { icon: "icon.svg", colors: ["#112233"] } } });
+  assert.equal(advice(branded).status, "pass");
+  assert.equal(branded.tier, "A");
+
+  const missing = await grade({ ...polishedFiles, "showcase.json": { ...manifest, brand: { logo: "nope.svg" } } });
+  assert.match(missing.checks.find((check) => check.id === "manifest").detail, /brand not found: nope.svg/);
+  assert.equal(missing.tier, "B");
+});
+
 test("broken local links fail, and same-repo GitHub URLs resolve to local files", async () => {
   const root = await fixture({
     ...polishedFiles,

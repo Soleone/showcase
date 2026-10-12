@@ -40,6 +40,14 @@ function mediaReferences(project) {
   return [...fromReadme, ...fromManifest];
 }
 
+const brandKeys = ["icon", "logo", "wordmark"];
+const needsIcon = ["web-app", "local-web-app", "browser-extension", "desktop-app"];
+
+function brandReferences(project) {
+  const brand = project.manifest?.data?.brand ?? {};
+  return brandKeys.filter((key) => typeof brand[key] === "string").map((key) => ({ src: brand[key], base: project.root }));
+}
+
 async function missingFiles(project, references) {
   const missing = [];
   for (const { src, base } of references) {
@@ -149,10 +157,25 @@ export const checks = [
       const { manifest } = project;
       if (!manifest) return fail("no showcase.json");
       if (manifest.errors.length) return fail(manifest.errors.slice(0, 3).join("; "));
-      const missing = await missingFiles(project, mediaReferences(project).filter((item) => item.manifest));
-      return missing.length ? fail(`media not found: ${missing.join(", ")}`) : pass(`${manifest.data.kind}: "${manifest.data.title}"`);
+      const missingMedia = await missingFiles(project, mediaReferences(project).filter((item) => item.manifest));
+      const missingBrand = await missingFiles(project, brandReferences(project));
+      if (missingMedia.length) return fail(`media not found: ${missingMedia.join(", ")}`);
+      return missingBrand.length ? fail(`brand not found: ${missingBrand.join(", ")}`) : pass(`${manifest.data.kind}: "${manifest.data.title}"`);
     },
     hint: (project) => project.manifest ? "Fix the errors in showcase.json." : "Run `showcase init` to create showcase.json.",
+  },
+  {
+    id: "brand.icon",
+    guide: "brand",
+    tier: "A",
+    required: false,
+    label: "Icon for the favicon and cards",
+    run: (project) => {
+      const icon = manifestData(project)?.brand?.icon;
+      if (icon) return pass(icon);
+      return needsIcon.includes(project.kind) ? fail("brand.icon not set in showcase.json") : pass(`not needed for a ${project.kind}`);
+    },
+    hint: () => "Add a square icon (SVG if you can) and set brand.icon in showcase.json. It becomes the favicon.",
   },
   {
     id: "media.motion",

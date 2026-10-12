@@ -50,3 +50,9 @@ test("demo.externals needs a seam and a stand-in for each external", () => {
     "demo.externals[0].standIn: must be one of canned, replay, simulated, bring-your-own, real, omitted",
   ]);
 });
+
+test("brand takes images and #rrggbb colors", () => {
+  const base = { title: "T", pitch: "P", description: "D", kind: "web-app" };
+  assert.deepEqual(validate({ ...base, brand: { icon: "icon.svg", logo: "logo.svg", wordmark: "word.svg", colors: ["#5b8DEF", "#112233"] } }), []);
+  assert.deepEqual(validate({ ...base, brand: { colors: ["#5b8def", "blue"], font: "Inter" } }), ["brand.colors[1]: must match ^#[0-9a-fA-F]{6}$", "brand.font: unknown field"]);
+});

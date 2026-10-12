@@ -8,5 +8,6 @@ The project's facts, for any portfolio to use. Start from `showcase init <path> 
 - `live` is read from showcase.json only. A site that is up still fails the `live` check until showcase.json says where it is.
 - `ceiling` is the highest tier reachable. `check` stops suggesting more, and a portfolio goal never exceeds it. Use it instead of forcing a tier, and say why.
 - `media`: `hero` (a still), `motion` (a looping WebP or GIF), `video`, and `capture`, the command that regenerates them. See `media`.
+- `brand`: `icon`, `logo`, `wordmark` and `colors`. Not graded; a web app, desktop app or extension gets advice when it has no icon. See `brand`.
 - `demo.local` is the one command that runs it with sample data. `demo.strategy` is the route to S, by kind (see `demo`).
 - `demo.externals` lists everything a demo cannot reach (a model, an account, hardware, a service, another app), the `seam` where a stand-in plugs in without changing the code, and the `standIn` used: `canned`, `replay`, `simulated`, `bring-your-own`, `real` or `omitted`. List an external even when the answer is `bring-your-own` (an optional companion app, a user's own account). Use `[]` when there is nothing. Each `note` is shown to visitors, so make it say plainly what is not real.
