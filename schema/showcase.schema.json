@@ -25,7 +25,7 @@
       "description": "A couple of sentences that go further than the pitch (how it works, what makes it different). Never restates the pitch; a portfolio shows the two together."
     },
     "kind": {
-      "enum": ["web-app", "local-web-app", "cli", "library", "browser-extension", "desktop-app", "agent-extension", "game", "service", "other"],
+      "enum": ["web-app", "local-web-app", "cli", "library", "browser-extension", "desktop-app", "agent-extension", "game", "service", "theme", "other"],
       "description": "local-web-app: a browser UI backed by a process on the user's machine (local models, hardware, files), so it cannot be hosted as-is."
     },
     "stage": {

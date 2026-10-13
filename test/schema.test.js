@@ -10,7 +10,7 @@ test("reports missing, unknown and malformed fields", () => {
   const errors = validate({ title: "", kind: "spaceship", live: "ftp://example.com", year: 1800, media: { hero: "a.png", gif: "b.gif" } });
   assert.deepEqual(errors.sort(), [
     "description: required",
-    "kind: must be one of web-app, local-web-app, cli, library, browser-extension, desktop-app, agent-extension, game, service, other",
+    "kind: must be one of web-app, local-web-app, cli, library, browser-extension, desktop-app, agent-extension, game, service, theme, other",
     "live: must be an http(s) URL",
     "media.gif: unknown field",
     "pitch: required",

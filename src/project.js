@@ -52,12 +52,15 @@ export async function detectKind(root, pkg) {
     if (deps.electron || deps["@tauri-apps/api"] || await exists(path.join(root, "src-tauri"))) return "desktop-app";
     if (pkg.bin) return "cli";
     if (pkg.pi?.extensions) return "agent-extension";
+    if (pkg.contributes?.themes) return "theme";
     if (webFrameworks.some((name) => deps[name])) return "web-app";
     if (pkg.main || pkg.exports) return "library";
   }
   if (await exists(path.join(root, "Cargo.toml"))) return await exists(path.join(root, "src/main.rs")) ? "cli" : "library";
   if (await exists(path.join(root, "go.mod"))) return await exists(path.join(root, "main.go")) ? "cli" : "library";
   if (await exists(path.join(root, "index.html"))) return "web-app";
+  // An Omarchy theme: a palette and its wallpapers.
+  if (await exists(path.join(root, "colors.toml")) && await exists(path.join(root, "backgrounds"))) return "theme";
   return "other";
 }
 

@@ -13,6 +13,7 @@ const motionHints = {
   "desktop-app": "Record the main flow as a short looping WebP and show it in the README.",
   "browser-extension": "Record a short before/after clip of the extension in action and show it in the README.",
   "agent-extension": "Record a real session as a short looping WebP and show it in the README.",
+  theme: "Record the theme in use (wallpapers, views, light and dark) as a short looping WebP and show it in the README.",
 };
 
 const liveHints = {
@@ -24,6 +25,7 @@ const liveHints = {
   library: "Host a small playground, then set live in showcase.json.",
   "desktop-app": "Ship a web build with sample data or a download page, then set live in showcase.json.",
   game: "Host a playable web build, then set live in showcase.json.",
+  theme: "Host a preview page drawn in the theme's own colors and assets, then set live in showcase.json.",
 };
 
 function manifestData(project) {

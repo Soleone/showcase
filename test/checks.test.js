@@ -109,6 +109,9 @@ test("detects common project kinds", async () => {
   assert.equal(await kind({ "package.json": { pi: { extensions: ["a.js"] } } }), "agent-extension");
   assert.equal(await kind({ "package.json": { dependencies: { next: "16" } } }), "web-app");
   assert.equal(await kind({ "Cargo.toml": "", "src/main.rs": "" }), "cli");
+  assert.equal(await kind({ "colors.toml": 'accent = "#d4af37"\n', "backgrounds/1.jpg": "" }), "theme");
+  assert.equal(await kind({ "colors.toml": 'accent = "#d4af37"\n' }), "other");
+  assert.equal(await kind({ "package.json": { contributes: { themes: [{ label: "Gilt", path: "gilt.json" }] } } }), "theme");
   assert.equal(await kind({ "package.json": { dependencies: { next: "16" } }, "showcase.json": { kind: "game" } }), "game");
   assert.equal(await kind({}), "other");
 });

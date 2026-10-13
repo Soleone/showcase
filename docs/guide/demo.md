@@ -8,6 +8,7 @@ S means someone can try it for real with one click. What that means depends on `
 - `local-web-app`, `agent-extension`: `replay` of a real recorded session.
 - `library`: `playground`.
 - `desktop-app`: a web build, or `download`.
+- `theme`: `hosted`, a preview page drawn from the theme's own colors and assets (a mock of what it themes), so it cannot drift from the theme.
 
 Anything that needs an account, a domain or a deploy is the person's step: prepare it and hand over the exact commands. If nothing can be hosted, set `ceiling`.
 
