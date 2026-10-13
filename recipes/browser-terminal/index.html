@@ -379,37 +379,62 @@
       const env = { HOME: home, PATH: basePath, ...Object.fromEntries(values.map(([key, value]) => [key, expand(value)])) };
       sandbox = { container, env };
       // Setup runs while the shell starts; the shell itself never needs the seeded files.
+      const steps = config.setup ?? [];
+      let progress = "Getting ready";
       const setup = (async () => {
         // The theme is in place before setup, so whatever setup or start launches reads it.
         await writeTheme(current);
-        for (const command of config.setup ?? []) await run(container, command, env);
+        for (const [index, command] of steps.entries()) {
+          progress = `Setting up the sandbox (${index + 1}/${steps.length})`;
+          await run(container, command, env);
+        }
         mark("setup");
       })();
 
       term.reset();
       term.write(`${(config.welcome ?? []).join("\n")}\n\n`);
+      // Until setup is done the shell is held back: a spinner stands in for its prompt and keys are dropped,
+      // so nothing typed early ends up in front of the start command.
+      let shellOpen = false;
+      let held = "";
+      let typedEarly = false;
+      const frames = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
+      let frame = 0;
+      const spin = () => term.write(`\r\x1b[2K${dim(`${frames[frame++ % frames.length]} ${progress}…${typedEarly ? "  Typing opens once this is done." : ""}`)}`);
+      spin();
+      const spinner = setInterval(spin, 80);
+      const openShell = () => {
+        clearInterval(spinner);
+        term.write(`\r\x1b[2K${held}`);
+        shellOpen = true;
+      };
       const shell = await container.spawn("jsh", { env, terminal: { cols: term.cols, rows: term.rows } });
       let prompted;
       const firstPrompt = new Promise((resolve) => { prompted = resolve; }).then(() => mark("prompt"));
       shell.output.pipeTo(new WritableStream({
         write(data) {
-          term.write(data);
+          if (shellOpen) term.write(data); else held += data;
           prompted();
         },
       }));
       // Buttons wait for the first prompt and the setup, so a click never runs ahead of either.
       Promise.all([firstPrompt, setup]).then(() => {
+        openShell();
         // The recipe's start command is typed into the shell, so the visitor sees what launched and can run it again.
         if (config.start) input.write(`${config.start}\r`);
         for (const button of hints.querySelectorAll("button")) button.disabled = false;
         mark("ready");
         window.demoReady = true;
       }, (error) => {
+        openShell();
         term.write(red(`\nSetup failed: ${error.message}\n`));
         window.demoError = error.message;
       });
       input = shell.input.getWriter();
-      term.onData((data) => input.write(data));
+      term.onData((data) => {
+        if (shellOpen) input.write(data);
+        else typedEarly = true;
+      });
       new ResizeObserver(() => {
         fit.fit();
         shell.resize({ cols: term.cols, rows: term.rows });
