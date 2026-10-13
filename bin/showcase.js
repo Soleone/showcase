@@ -54,7 +54,7 @@ Options:
   --status <s>   review, included or ignored (discover --json)
   --no-github    Do not ask GitHub, scan folders only (discover)
   --stage <s>    product, prototype or proof of concept, saved in its showcase.json (set)
-  --offline      Do not request the live URL (check, collect, manage)
+  --offline      Do not request the live URL or GitHub (check, collect, manage)
   --out <dir>    Where to write feed.json and media/ (collect), or the page
                  (terminal, default dist/browser)
   --serve        Serve the page on 127.0.0.1 after building it (terminal)

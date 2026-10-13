@@ -30,4 +30,9 @@ Realistic and specific, never lorem ipsum, never the person's private data. Cont
 
 - One host project per demo, on a subdomain (`<slug>.example.com`) through a wildcard DNS record, so adding a demo never touches DNS again.
 - New files can 404 for a few seconds after a deploy reports ready. Re-check before debugging.
-- After it is live, set `live` in showcase.json and run `showcase check` without `--offline`.
+- After it is live, make it impossible to miss. Someone landing on the repo should find it before anything else:
+  - set `live` in showcase.json;
+  - link it in the README right under the pitch, above the first `##` heading (for example "[Try it in your browser](https://slug.example.com)");
+  - set it as the repo's homepage, `gh repo edit --homepage https://slug.example.com`, so it shows in the About box.
+
+  Then run `showcase check` without `--offline`; it checks all three.

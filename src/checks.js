@@ -1,5 +1,5 @@
 import path from "node:path";
-import { exists, localPath, mediaType } from "./project.js";
+import { exists, githubRepo, localPath, mediaType } from "./project.js";
 
 export const tiers = ["D", "C", "B", "A", "S"];
 
@@ -64,6 +64,10 @@ async function isMotion(project, { src, base, tag }) {
   const type = await mediaType(project, src, base);
   return type === "unverified" ? type : type === "motion" || type === "video";
 }
+
+// Compares URLs the way a person would: letter case and a trailing slash do not matter.
+const sameUrl = (a, b) => typeof a === "string" && typeof b === "string" && a.trim().replace(/\/+$/, "").toLowerCase() === b.trim().replace(/\/+$/, "").toLowerCase();
+const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const pass = (detail) => ({ status: "pass", detail });
 const fail = (detail) => ({ status: "fail", detail });
@@ -251,6 +255,43 @@ export const checks = [
     hint: (project, result) => manifestData(project)?.live
       ? (result.status === "skip" ? "Run without --offline to verify the live URL." : "Get the live URL responding again.")
       : liveHints[project.kind] ?? "Host something people can try in one click, then set live in showcase.json.",
+  },
+  {
+    id: "live.readme",
+    guide: "demo",
+    tier: "S",
+    label: "Live URL at the top of the README",
+    run: (project) => {
+      const live = manifestData(project)?.live;
+      // Without a live URL the live check already blocks S; this one would only repeat it.
+      if (!live) return pass("no live URL yet");
+      if (!project.readme) return noReadme;
+      const url = new RegExp(`${escape(live.replace(/\/+$/, ""))}/?(?=$|[\\s)"'>\\]])`, "im");
+      return url.test(project.readme.top) ? pass(live) : fail(`${live} is not linked above the first section`);
+    },
+    hint: (project) => `Link ${manifestData(project)?.live} right under the pitch, above the first ## heading, so a visitor on GitHub sees it first.`,
+  },
+  {
+    id: "live.homepage",
+    guide: "demo",
+    tier: "S",
+    label: "Live URL is the GitHub homepage",
+    run: async (project, options) => {
+      const live = manifestData(project)?.live;
+      if (!live) return pass("no live URL yet");
+      if (!project.remote) return pass("not on GitHub");
+      if (options.offline) return { status: "skip", detail: "not verified offline" };
+      try {
+        const { homepage } = await (options.githubRepo ?? githubRepo)(project.remote, options.fetch);
+        if (sameUrl(homepage, live)) return pass(live);
+        return fail(homepage ? `homepage is ${homepage}` : "homepage not set");
+      } catch (error) {
+        return { status: "skip", detail: `could not read ${project.remote.owner}/${project.remote.repo}: ${error.message}` };
+      }
+    },
+    hint: (project, result) => result.status === "skip"
+      ? "Run without --offline, signed in to gh, to verify the homepage."
+      : `Run \`gh repo edit --homepage ${manifestData(project)?.live}\` so the link shows in the repo's About box.`,
   },
 ];
 

@@ -37,10 +37,37 @@ test("a valid manifest with motion and a local demo is A, without the advisory c
   assert.match(report.nextSteps[0].hint, /in-browser terminal/);
 });
 
+const liveReadme = polishedFiles["README.md"].replace("## Quick start", "[Try it in your browser](https://demo.example.com/)\n\n## Quick start");
+
 test("a reachable live URL is S", async () => {
-  const report = await grade({ ...polishedFiles, "showcase.json": { ...manifest, live: "https://demo.example.com" } });
+  const report = await grade({ ...polishedFiles, "README.md": liveReadme, "showcase.json": { ...manifest, live: "https://demo.example.com" } });
   assert.equal(report.tier, "S");
   assert.equal(report.next, null);
+});
+
+test("S needs the live URL at the top of the README", async () => {
+  const files = { ...polishedFiles, "showcase.json": { ...manifest, live: "https://demo.example.com" } };
+  const missing = await grade(files);
+  assert.equal(missing.tier, "A");
+  assert.deepEqual(missing.nextSteps.map((step) => step.id), ["live.readme"]);
+  const below = await grade({ ...files, "README.md": `${polishedFiles["README.md"]}\n## Demo\n\nhttps://demo.example.com\n` });
+  assert.equal(status(below, "live.readme"), "fail");
+  const longer = await grade({ ...files, "README.md": liveReadme.replace("demo.example.com/", "demo.example.com.evil.net") });
+  assert.equal(status(longer, "live.readme"), "fail");
+});
+
+test("S needs the live URL as the GitHub homepage", async () => {
+  const root = await fixture({ ...polishedFiles, "README.md": liveReadme, "showcase.json": { ...manifest, live: "https://demo.example.com" } });
+  execFileSync("git", ["init", "-q", root]);
+  execFileSync("git", ["-C", root, "remote", "add", "origin", "git@github.com:me/demo.git"]);
+  const project = await loadProject(root);
+  const withHomepage = (homepage) => evaluate(project, { fetch: okFetch, githubRepo: async ({ owner, repo }) => (assert.equal(`${owner}/${repo}`, "me/demo"), { homepage }) });
+  assert.equal((await withHomepage("https://Demo.example.com/")).tier, "S");
+  const unset = await withHomepage(null);
+  assert.equal(unset.tier, "A");
+  assert.match(unset.nextSteps[0].hint, /gh repo edit --homepage https:\/\/demo\.example\.com/);
+  const unknown = await evaluate(project, { fetch: okFetch, githubRepo: async () => { throw new Error("rate limited"); } });
+  assert.equal(status(unknown, "live.homepage"), "skip");
 });
 
 test("an unreachable or unverified live URL stays A", async () => {

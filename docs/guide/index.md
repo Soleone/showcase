@@ -17,7 +17,7 @@ Use `showcase check <a> <b> --matrix` to compare several projects, and `--json` 
 - **C, explained.** The README says what it is and how to run it: 80 or more words and a usage section or code block.
 - **B, sells itself.** A pitch right under the title, a hero image or loop before the first `##`, at most 1,200 words of prose, no broken local links.
 - **A, shows itself in motion.** A valid `showcase.json`, a looping WebP, GIF or video, and a one-command local demo (`demo.local`).
-- **S, try it for real.** A `live` URL that responds.
+- **S, try it for real.** A `live` URL that responds, linked at the top of the README and set as the GitHub homepage.
 
 If a tier is out of reach (nothing can be hosted, for example), set `ceiling` in showcase.json instead of forcing it, and say why.
 

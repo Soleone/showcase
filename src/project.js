@@ -31,6 +31,17 @@ export async function gitRemote(root) {
   }
 }
 
+// The repo's GitHub metadata, through the gh CLI when it is signed in (no rate limit worth noticing), else the public API.
+export async function githubRepo({ owner, repo }, fetch = globalThis.fetch) {
+  try {
+    const { stdout } = await exec("gh", ["api", `repos/${owner}/${repo}`]);
+    return JSON.parse(stdout);
+  } catch { /* no gh, or not signed in */ }
+  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers: { accept: "application/vnd.github+json" }, signal: AbortSignal.timeout(8000) });
+  if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
+  return response.json();
+}
+
 export async function firstCommitYear(root) {
   try {
     const { stdout } = await exec("git", ["-C", root, "log", "--reverse", "--format=%ad", "--date=format:%Y"]);

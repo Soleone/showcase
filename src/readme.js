@@ -81,6 +81,8 @@ export function parseReadme(source) {
     media,
     links,
     firstSectionLine: firstSection?.line ?? lines.length,
+    // Everything above the first section, where a visitor looks first.
+    top: lines.slice(0, firstSection?.line ?? lines.length).join("\n"),
   };
 }
 
