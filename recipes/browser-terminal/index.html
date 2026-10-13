@@ -207,12 +207,31 @@
       brightBlue: lift(ansi.blue, inkStrong), brightMagenta: lift(ansi.magenta, inkStrong), brightCyan: lift(ansi.cyan, inkStrong), brightWhite: ansi.brightWhite,
     });
     let term;
+    // The sandbox learns the theme too: ~/.config/showcase/theme.json holds the page's colors and the terminal
+    // palette, rewritten on every change, and the recipe's onTheme command can turn it into a program's own theme.
+    let sandbox = null;
+    let shared = Promise.resolve();
+    let shareTimer;
+    async function writeTheme(theme) {
+      if (!sandbox || !theme) return;
+      const { container, env } = sandbox;
+      const { name, label, mode, page, ink, inkStrong, muted, accent, surface, line, terminal } = theme;
+      await container.fs.mkdir(".config/showcase", { recursive: true });
+      await container.fs.writeFile(".config/showcase/theme.json", `${JSON.stringify({ name, label, mode, page, ink, inkStrong, muted, accent, surface, line, terminal, palette: terminalColors(theme) }, null, 2)}\n`);
+      if (config.onTheme) await run(container, config.onTheme, env);
+    }
+    function shareTheme(theme) {
+      clearTimeout(shareTimer);
+      // Arrow keys preview themes quickly; only the one the visitor rests on is written.
+      shareTimer = setTimeout(() => { shared = shared.then(() => writeTheme(theme)).catch((error) => console.warn("onTheme failed", error)); }, 150);
+    }
     // Page and terminal change together; xterm maps its palette onto whatever the programs print.
     function apply(theme, save) {
       const vars = { page: theme.page, ink: theme.ink, "ink-strong": theme.inkStrong, muted: theme.muted, accent: theme.accent, surface: theme.surface, line: theme.line, terminal: theme.terminal };
       for (const [name, value] of Object.entries(vars)) document.documentElement.style.setProperty(`--${name}`, value);
       document.documentElement.style.colorScheme = document.documentElement.dataset.theme = theme.mode;
       if (term) term.options.theme = terminalColors(theme);
+      shareTheme(theme);
       if (save) try { localStorage.setItem(storeKey, JSON.stringify({ name: theme.name, mode: theme.mode, vars })); } catch {}
     }
     if (current) apply(current);
@@ -358,8 +377,11 @@
         : "/usr/local/bin:/usr/bin:/bin";
       const expand = (value) => value.replace(/(^|:)~(?=\/|:|$)/g, `$1${home}`).replace("$PATH", basePath);
       const env = { HOME: home, PATH: basePath, ...Object.fromEntries(values.map(([key, value]) => [key, expand(value)])) };
+      sandbox = { container, env };
       // Setup runs while the shell starts; the shell itself never needs the seeded files.
       const setup = (async () => {
+        // The theme is in place before setup, so whatever setup or start launches reads it.
+        await writeTheme(current);
         for (const command of config.setup ?? []) await run(container, command, env);
         mark("setup");
       })();
@@ -377,6 +399,8 @@
       }));
       // Buttons wait for the first prompt and the setup, so a click never runs ahead of either.
       Promise.all([firstPrompt, setup]).then(() => {
+        // The recipe's start command is typed into the shell, so the visitor sees what launched and can run it again.
+        if (config.start) input.write(`${config.start}\r`);
         for (const button of hints.querySelectorAll("button")) button.disabled = false;
         mark("ready");
         window.demoReady = true;

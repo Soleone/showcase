@@ -13,6 +13,8 @@ Keep the recipe folder in the project itself (`demo/browser/` by default), so th
 - `mount`: target path in the sandbox → `{ from, include }`. `from` may use `~` and `$VARS`; `include` limits the top-level entries copied. Binary files (images, loops) are mounted too.
 - `env`: values may use `~` (the sandbox home, always `/home/demo`) and `$PATH` (costs one extra process at boot; write the PATH out instead).
 - `setup`: commands run before the shell opens, e.g. seeding sample data dated relative to today.
+- `start`: a command typed into the shell once setup is done, to open the program right away (e.g. a TUI). The visitor sees it run and can run it again after quitting.
+- `onTheme`: a command run whenever the visitor picks a theme. Before it runs, the page writes `~/.config/showcase/theme.json` with the theme's colors and the full terminal palette (`palette`, as hex), so a program that draws its own colors can follow the page. The file is also written once before `setup`.
 - `welcome`, `hints` (buttons that type a command), `seed` (a browser module that adds files computed at visit time, such as dates relative to today), and overrides for `title`, `pitch`, `repo`, `disclosure`, `defaultTheme` (a name from `themes.json`, default `gilt`).
 
 The output is static: `index.html`, `files.json`, `terminal.json`, `themes.json`, `fonts/` and a `vercel.json` with the COOP/COEP headers the sandbox needs.
