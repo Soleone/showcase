@@ -6,7 +6,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { clipFrames, encode } from "../src/capture.js";
+import { clipFrames, encode, findRef } from "../src/capture.js";
 import { inspectMotion } from "../src/inspect.js";
 import { loadProject } from "../src/project.js";
 import { parseAnimatedWebp } from "../src/webp.js";
@@ -65,6 +65,20 @@ test("capture explains what to set when showcase.json has no capture command", a
   const { code, stderr } = await run("capture", root);
   assert.equal(code, 2);
   assert.match(stderr, /Set media.capture in .*showcase.json/);
+});
+
+test("findRef finds a button by name, also when its snapshot line carries state", () => {
+  const snapshot = [
+    '- button "Choose a theme" [expanded=false, ref=e16]',
+    '- button "Close" [ref=e2]',
+    '- option "Topdeck" [selected, ref=e18]',
+    '- button "Play (1x)" [ref=e7]',
+  ].join("\n");
+  assert.equal(findRef(snapshot, "button", "Choose a theme"), "e16");
+  assert.equal(findRef(snapshot, "button", "Close"), "e2");
+  assert.equal(findRef(snapshot, "option", "Topdeck"), "e18");
+  assert.equal(findRef(snapshot, "button", "Play (1x)"), "e7");
+  assert.equal(findRef(snapshot, "button", "Topdeck"), undefined);
 });
 
 test("a clip opens on the frame on screen when it starts", () => {

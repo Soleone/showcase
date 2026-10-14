@@ -16,10 +16,17 @@ async function requireTool(command, versionFlag, install) {
   }
 }
 
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// The ref of the element with this role and accessible name in an `agent-browser snapshot -i`.
+// Its bracket can hold state before the ref, such as `[expanded=false, ref=e16]`.
+export function findRef(snapshot, role, name) {
+  return snapshot.match(new RegExp(`${role} "${escapeRegExp(name)}" \\[(?:[^\\]]*, )?ref=(\\w+)[,\\]]`))?.[1];
+}
+
 // A thin handle on one agent-browser session. Every call is a separate agent-browser process.
 function page(session, env) {
   const run = (...args) => exec("agent-browser", ["--session", session, ...args], { timeout: 120_000, env }).then(({ stdout }) => stdout.trim());
-  const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return {
     run,
     // Runs a script in the page and returns its JSON result.
@@ -29,7 +36,7 @@ function page(session, env) {
     sleep: (ms) => run("wait", String(ms)),
     // A real click through the accessibility tree, which counts as a user gesture (script clicks do not unlock audio).
     click: async (name, role = "button") => {
-      const ref = (await run("snapshot", "-i")).match(new RegExp(`${role} "${escape(name)}" \\[ref=(\\w+)\\]`))?.[1];
+      const ref = findRef(await run("snapshot", "-i"), role, name);
       if (!ref) throw new Error(`No ${role} named "${name}" on the page`);
       await run("click", `@${ref}`);
     },
