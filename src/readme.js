@@ -41,6 +41,8 @@ export function parseReadme(source) {
   const media = [];
   const links = [];
   const headings = [];
+  // Each ## section with the lines of its code blocks, to tell what a section is for.
+  const sections = [];
   let codeBlocks = 0;
   let fence = null;
 
@@ -48,6 +50,7 @@ export function parseReadme(source) {
     const fenceMatch = line.match(/^\s*(```+|~~~+)/);
     if (fence) {
       if (fenceMatch && fenceMatch[1][0] === fence[0] && fenceMatch[1].length >= fence.length) fence = null;
+      else sections.at(-1)?.code.push(line);
       return;
     }
     if (fenceMatch) {
@@ -59,8 +62,11 @@ export function parseReadme(source) {
 
     const markdownHeading = line.match(/^(#{1,6})\s+(.*?)\s*#*\s*$/);
     const htmlHeading = line.match(/^\s*<h([1-6])\b[^>]*>(.*?)<\/h\1>/i);
-    if (markdownHeading) headings.push({ level: markdownHeading[1].length, text: plain(markdownHeading[2]).trim(), line: index });
-    else if (htmlHeading) headings.push({ level: Number(htmlHeading[1]), text: plain(htmlHeading[2]).trim(), line: index });
+    const heading = markdownHeading ? { level: markdownHeading[1].length, text: plain(markdownHeading[2]).trim(), line: index }
+      : htmlHeading ? { level: Number(htmlHeading[1]), text: plain(htmlHeading[2]).trim(), line: index }
+      : null;
+    if (heading) headings.push(heading);
+    if (heading?.level === 2) sections.push({ heading: heading.text, line: index, code: [] });
 
     for (const match of line.matchAll(imagePattern)) if (!badgePattern.test(match[1])) media.push({ src: match[1], line: index });
     for (const match of line.matchAll(htmlMediaPattern)) if (!badgePattern.test(match[2])) media.push({ src: match[2], line: index, tag: match[1].toLowerCase() });
@@ -78,6 +84,7 @@ export function parseReadme(source) {
     words: countWords(prose.join("\n")),
     codeBlocks,
     headings,
+    sections,
     media,
     links,
     firstSectionLine: firstSection?.line ?? lines.length,

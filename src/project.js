@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import { open, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -31,15 +32,34 @@ export async function gitRemote(root) {
   }
 }
 
-// The repo's GitHub metadata, through the gh CLI when it is signed in (no rate limit worth noticing), else the public API.
-export async function githubRepo({ owner, repo }, fetch = globalThis.fetch) {
+// Reads the GitHub API through the gh CLI when it is signed in (no rate limit worth noticing), else the public API.
+async function githubApi(endpoint, fetch) {
   try {
-    const { stdout } = await exec("gh", ["api", `repos/${owner}/${repo}`]);
+    const { stdout } = await exec("gh", ["api", endpoint], { maxBuffer: 64 * 1024 * 1024 });
     return JSON.parse(stdout);
   } catch { /* no gh, or not signed in */ }
-  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers: { accept: "application/vnd.github+json" }, signal: AbortSignal.timeout(8000) });
+  const response = await fetch(`https://api.github.com/${endpoint}`, { headers: { accept: "application/vnd.github+json" }, signal: AbortSignal.timeout(8000) });
   if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
   return response.json();
+}
+
+export function githubRepo({ owner, repo }, fetch = globalThis.fetch) {
+  return githubApi(`repos/${owner}/${repo}`, fetch);
+}
+
+// What GitHub shows on the default branch: its name and the git blob hash of every file, by path from the repo root.
+export async function githubFiles(remote, fetch = globalThis.fetch) {
+  const { default_branch: branch } = await githubRepo(remote, fetch);
+  const tree = await githubApi(`repos/${remote.owner}/${remote.repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`, fetch);
+  return { branch, truncated: tree.truncated, blobs: new Map(tree.tree.filter((item) => item.type === "blob").map((item) => [item.path, item.sha])) };
+}
+
+// The file's git blob hash, the same one GitHub lists, and its path from the repo root.
+export async function gitBlob(root, file) {
+  const content = await readFile(file);
+  const sha = createHash("sha1").update(`blob ${content.length}\0`).update(content).digest("hex");
+  const { stdout: prefix } = await exec("git", ["-C", root, "rev-parse", "--show-prefix"]);
+  return { path: prefix.trim() + path.relative(root, file).split(path.sep).join("/"), sha };
 }
 
 export async function firstCommitYear(root) {

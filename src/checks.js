@@ -1,10 +1,17 @@
 import path from "node:path";
-import { exists, githubRepo, localPath, mediaType } from "./project.js";
+import { exists, gitBlob, githubFiles, githubRepo, localPath, mediaType } from "./project.js";
 
 export const tiers = ["D", "C", "B", "A", "S"];
 
 const usageHeading = /install|usage|quick ?start|getting started|setup|how to (use|run)|try it|running/i;
 const maxReadmeWords = 1200;
+
+// A section is for contributors when its heading says so or its code clones, tests or runs a dev server. Installing and building can be a user's route from source.
+const contributorHeading = /contribut|develop|hacking|from source|^build|building|local setup|^test|testing|architecture|internals|project (structure|layout)|releasing/i;
+const contributorCommand = /\b(npm|pnpm|yarn|bun)( run)? (test|lint|check|typecheck|dev)\b|\bgit clone\b|\b(cargo|go) test\b|\bpytest\b/;
+// Sections that belong at the end anyway.
+const closingHeading = /licen[cs]e|documentation|^docs|credits|acknowledg|thanks|changelog|links|related|see also|support|contact|author|sponsor/i;
+const forContributors = (section) => contributorHeading.test(section.heading) || section.code.some((line) => contributorCommand.test(line));
 
 const motionHints = {
   cli: "Record a terminal loop (e.g. a VHS .tape exported to WebP or MP4) and show it in the README.",
@@ -155,6 +162,19 @@ export const checks = [
     hint: () => "Fix or remove the broken links.",
   },
   {
+    id: "readme.order",
+    guide: "pitch",
+    tier: "B",
+    label: "Users first, contributor setup at the end",
+    run: ({ readme }) => {
+      if (!readme) return noReadme;
+      const first = readme.sections.findIndex(forContributors);
+      const later = first < 0 ? undefined : readme.sections.slice(first + 1).find((section) => !forContributors(section) && !closingHeading.test(section.heading));
+      return later ? fail(`"${readme.sections[first].heading}" is for contributors but comes before "${later.heading}"`) : pass(first < 0 ? "no contributor sections" : `contributors from "${readme.sections[first].heading}"`);
+    },
+    hint: () => "Lead with what someone using it needs (what it does, how to get it, how to use it). Move cloning, building, testing and contributing to the end of the README or to docs/.",
+  },
+  {
     id: "manifest",
     guide: "manifest",
     tier: "A",
@@ -292,6 +312,38 @@ export const checks = [
     hint: (project, result) => result.status === "skip"
       ? "Run without --offline, signed in to gh, to verify the homepage."
       : `Run \`gh repo edit --homepage ${manifestData(project)?.live}\` so the link shows in the repo's About box.`,
+  },
+  {
+    id: "readme.published",
+    guide: "pitch",
+    tier: "S",
+    label: "GitHub shows this README and its images",
+    run: async (project, options) => {
+      if (!project.readme) return noReadme;
+      if (!project.remote) return pass("not on GitHub");
+      if (options.offline) return { status: "skip", detail: "not verified offline" };
+      let published;
+      try {
+        published = await (options.githubFiles ?? githubFiles)(project.remote, options.fetch);
+      } catch (error) {
+        return { status: "skip", detail: `could not read ${project.remote.owner}/${project.remote.repo}: ${error.message}` };
+      }
+      const base = path.dirname(project.readme.file);
+      const images = project.readme.media.map((item) => localPath(project, item.src, base)).filter(Boolean);
+      const stale = [];
+      for (const file of [project.readme.file, ...new Set(images)]) {
+        if (!(await exists(file))) continue;
+        const local = await gitBlob(project.root, file);
+        const remote = published.blobs.get(local.path);
+        if (remote === local.sha) continue;
+        if (!remote && published.truncated) return { status: "skip", detail: "the repo is too large to list" };
+        stale.push(remote ? `${local.path} differs` : `${local.path} missing`);
+      }
+      return stale.length ? fail(`on ${published.branch}: ${stale.slice(0, 3).join(", ")}${stale.length > 3 ? ` and ${stale.length - 3} more` : ""}`) : pass(`matches ${published.branch}`);
+    },
+    hint: (project, result) => result.status === "skip"
+      ? "Run without --offline, signed in to gh, to compare with GitHub."
+      : "Commit and push the README and its images to the default branch: visitors on GitHub still see the old version.",
   },
 ];
 

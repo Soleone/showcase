@@ -45,9 +45,9 @@ Each tier includes everything below it.
 |---|---|---|
 | **D** | Nothing to show yet | |
 | **C** | The README says what it is and how to run it | README present, 80+ words, a usage section or code block |
-| **B** | The README sells it | Pitch right under the title, hero visual before the first section, 1,200 words or fewer, no broken local links |
+| **B** | The README sells it | Pitch right under the title, hero visual before the first section, sections for users before contributor setup, 1,200 words or fewer, no broken local links |
 | **A** | It shows itself in motion | Valid `showcase.json`, a looping WebP, GIF or video, a one-command local demo |
-| **S** | One click to try it for real | `live` URL that responds, linked at the top of the README and set as the GitHub homepage |
+| **S** | One click to try it for real | `live` URL that responds, linked at the top of the README and set as the GitHub homepage; GitHub shows the same README and images |
 
 What "live" means depends on the kind of project: a hosted demo with sample data for a web app, an in-browser terminal for a CLI, a store listing for a browser extension, a replay for an agent, a preview page for a theme. Set `ceiling` when a tier is out of reach, for example `"A"` for something that cannot be hosted, and `check` stops suggesting it.
 

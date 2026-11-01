@@ -33,6 +33,7 @@ Realistic and specific, never lorem ipsum, never the person's private data. Cont
 - After it is live, make it impossible to miss. Someone landing on the repo should find it before anything else:
   - set `live` in showcase.json;
   - link it in the README right under the pitch, above the first `##` heading (for example "[Try it in your browser](https://slug.example.com)");
-  - set it as the repo's homepage, `gh repo edit --homepage https://slug.example.com`, so it shows in the About box.
+  - set it as the repo's homepage, `gh repo edit --homepage https://slug.example.com`, so it shows in the About box;
+  - push the README and its images to the default branch. `check` reads the files on disk, so a README that is only local still grades well while GitHub shows the old one.
 
-  Then run `showcase check` without `--offline`; it checks all three.
+  Then run `showcase check` without `--offline`; it checks all four.

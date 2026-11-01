@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import path from "node:path";
 import test from "node:test";
 import { evaluate } from "../src/checks.js";
-import { loadProject } from "../src/project.js";
-import { fixture, manifest, polishedFiles, webp } from "./helpers.js";
+import { gitBlob, loadProject } from "../src/project.js";
+import { fixture, manifest, polishedFiles, polishedReadme, webp } from "./helpers.js";
 
 const okFetch = async () => ({ ok: true, status: 200 });
 const grade = async (files, options = {}) => evaluate(await loadProject(await fixture(files)), { fetch: okFetch, ...options });
@@ -56,17 +57,53 @@ test("S needs the live URL at the top of the README", async () => {
   assert.equal(status(longer, "live.readme"), "fail");
 });
 
+// What GitHub would list if the project's README and images were pushed as they are.
+async function githubMatching(project) {
+  const files = [project.readme.file, path.join(project.root, "docs/hero.png")];
+  const blobs = new Map(await Promise.all(files.map(async (file) => Object.values(await gitBlob(project.root, file)))));
+  return { branch: "main", truncated: false, blobs };
+}
+
+test("B needs user sections before contributor setup", async () => {
+  const develop = "## Development\n\n```sh\ngit clone https://github.com/me/demo\nnpm test\n```\n";
+  const usage = "## Usage\n\nRun it on a folder of notes.\n";
+  const before = await grade({ ...polishedFiles, "README.md": `${polishedReadme}\n${develop}\n${usage}` });
+  assert.equal(before.tier, "C");
+  assert.deepEqual(before.nextSteps.map((step) => step.id), ["readme.order"]);
+  assert.match(before.nextSteps[0].detail, /"Development" is for contributors but comes before "Usage"/);
+  const byCommand = await grade({ ...polishedFiles, "README.md": `${polishedReadme}\n## Setup\n\n\`\`\`sh\npnpm install && pnpm test\n\`\`\`\n\n${usage}` });
+  assert.equal(status(byCommand, "readme.order"), "fail");
+  const after = await grade({ ...polishedFiles, "README.md": `${polishedReadme}\n${usage}\n${develop}\n## License\n\nMIT\n` });
+  assert.equal(status(after, "readme.order"), "pass");
+});
+
+test("S needs GitHub to show the same README and images", async () => {
+  const root = await fixture({ ...polishedFiles, "README.md": liveReadme, "showcase.json": { ...manifest, live: "https://demo.example.com" } });
+  execFileSync("git", ["init", "-q", root]);
+  execFileSync("git", ["-C", root, "remote", "add", "origin", "git@github.com:me/demo.git"]);
+  const project = await loadProject(root);
+  const published = await githubMatching(project);
+  const withFiles = (githubFiles) => evaluate(project, { fetch: okFetch, githubRepo: async () => ({ homepage: "https://demo.example.com" }), githubFiles });
+  assert.equal((await withFiles(async () => published)).tier, "S");
+  const stale = await withFiles(async () => ({ ...published, blobs: new Map([["README.md", "0".repeat(40)]]) }));
+  assert.equal(stale.tier, "A");
+  assert.equal(stale.nextSteps[0].detail, "on main: README.md differs, docs/hero.png missing");
+  const unknown = await withFiles(async () => { throw new Error("rate limited"); });
+  assert.equal(status(unknown, "readme.published"), "skip");
+});
+
 test("S needs the live URL as the GitHub homepage", async () => {
   const root = await fixture({ ...polishedFiles, "README.md": liveReadme, "showcase.json": { ...manifest, live: "https://demo.example.com" } });
   execFileSync("git", ["init", "-q", root]);
   execFileSync("git", ["-C", root, "remote", "add", "origin", "git@github.com:me/demo.git"]);
   const project = await loadProject(root);
-  const withHomepage = (homepage) => evaluate(project, { fetch: okFetch, githubRepo: async ({ owner, repo }) => (assert.equal(`${owner}/${repo}`, "me/demo"), { homepage }) });
+  const published = await githubMatching(project);
+  const withHomepage = (homepage) => evaluate(project, { fetch: okFetch, githubFiles: async () => published, githubRepo: async ({ owner, repo }) => (assert.equal(`${owner}/${repo}`, "me/demo"), { homepage }) });
   assert.equal((await withHomepage("https://Demo.example.com/")).tier, "S");
   const unset = await withHomepage(null);
   assert.equal(unset.tier, "A");
   assert.match(unset.nextSteps[0].hint, /gh repo edit --homepage https:\/\/demo\.example\.com/);
-  const unknown = await evaluate(project, { fetch: okFetch, githubRepo: async () => { throw new Error("rate limited"); } });
+  const unknown = await evaluate(project, { fetch: okFetch, githubFiles: async () => published, githubRepo: async () => { throw new Error("rate limited"); } });
   assert.equal(status(unknown, "live.homepage"), "skip");
 });
 

@@ -8,6 +8,8 @@
 
 **README.** Cut before adding. Keep install, the first command and the one thing that makes it worth trying. Move reference material to `docs/`. The B tier allows 1,200 words of prose; shorter is better.
 
+**Users first.** Write the README for someone who wants to use the project, in the order they need it: what it does, how to try or get it, how to use it, what to know about their data. Cloning, building, testing, dev servers and contributing come last, in one Development section near the end or in `docs/development.md`. B fails when a section that clones, tests or runs a dev server comes before a section for users. License, documentation and credits can follow it.
+
 **C needs** 80 or more words and a Quick start section or code block that says how to install and run it.
 
 The pitch in README and the `pitch` in showcase.json should agree, but the README can say more. See `manifest` for the showcase.json side.
