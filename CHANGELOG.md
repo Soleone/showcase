@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0](https://github.com/Soleone/showcase/compare/v0.2.0...v0.3.0) (2026-11-03)
+
+### Features
+
+* **check:** README sections for users come first, and S needs GitHub to show the same README ([506402f](https://github.com/Soleone/showcase/commit/506402f39a538c12cdcaad3fb0356bb9263ce70b))
+* **check:** S needs the live URL at the top of the README and as the GitHub homepage ([f1214bc](https://github.com/Soleone/showcase/commit/f1214bcc89bf113071ce41dba3e8d84478f8665f))
+* **check:** S needs the looping WebP, GIF or video as the README hero ([8a05d31](https://github.com/Soleone/showcase/commit/8a05d31b9ee3e3d94ccd81f0ae913c9f5364a1fb))
+* **kind:** add theme, for color themes such as Omarchy and VS Code themes ([2adb688](https://github.com/Soleone/showcase/commit/2adb68831d91dfe57c56ffacb7d380f97e141277))
+* **terminal:** hold the shell back until setup is done, with a spinner ([73e18f9](https://github.com/Soleone/showcase/commit/73e18f9b9e5be8faf14327201b609434b2323971))
+* **terminal:** start a program right away, and share the page theme with the sandbox ([c15d509](https://github.com/Soleone/showcase/commit/c15d50951542a6fd00b51bf4b297341c6f2d163e))
+
+### Bug Fixes
+
+* **capture:** click finds buttons whose snapshot line carries state ([658b1b5](https://github.com/Soleone/showcase/commit/658b1b58f5f6f1530347c460283d30733f608460))
+
 ## [0.2.0](https://github.com/Soleone/showcase/compare/v0.1.0...v0.2.0) (2026-10-12)
 
 ### Features
