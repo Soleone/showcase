@@ -1,6 +1,6 @@
 # Motion and recording (A)
 
-The A tier wants a looping WebP, GIF or video. Record last, once what it shows is final, and script it so it can be redone: set `media.capture` to the command and run `showcase capture`, which records and then checks the loop (animated, loops forever, at least 640 px wide, 3 to 30 s, under 3 MB). `showcase capture --no-record` checks the existing file only. Look at the frame sheet it writes before keeping a take, and show it to the person. Never fake a take (see `pitch`).
+The A tier wants a looping WebP, GIF or video, and S wants it as the README hero, right under the pitch and above the first `##`. Record last, once what it shows is final, and script it so it can be redone: set `media.capture` to the command and run `showcase capture`, which records and then checks the loop (animated, loops forever, at least 640 px wide, 3 to 30 s, under 3 MB). `showcase capture --no-record` checks the existing file only. Look at the frame sheet it writes before keeping a take, and show it to the person. Never fake a take (see `pitch`).
 
 ## Web apps
 

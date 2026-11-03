@@ -33,7 +33,7 @@ test("collect grades each project, copies local media and writes feed.json", asy
   assert.equal((await stat(path.join(out, "media/demo/motion.webp"))).isFile(), true);
   assert.deepEqual(demo.brand, { icon: "brand/demo/icon.svg", wordmark: "https://example.com/word.svg", colors: ["#5b8def", "#222222"] });
   assert.equal((await stat(path.join(out, "brand/demo/icon.svg"))).isFile(), true);
-  assert.deepEqual({ tier: demo.tier, target: demo.target, gap: demo.gap, source: demo.source }, { tier: "A", target: "S", gap: ["live"], source: "showcase.json" });
+  assert.deepEqual({ tier: demo.tier, target: demo.target, gap: demo.gap, source: demo.source }, { tier: "A", target: "S", gap: ["live", "readme.motion"], source: "showcase.json" });
   assert.deepEqual({ title: plain.title, tier: plain.tier, target: plain.target, gap: plain.gap, source: plain.source }, { title: "Plain", tier: "D", target: "C", gap: ["readme.substance"], source: "draft" });
   assert.deepEqual(remote, { id: "github:me/remote", priority: null, title: "remote", repo: "https://github.com/me/remote", tier: null, target: null, gap: [], source: null });
   assert.equal(reports.length, 2);

@@ -34,11 +34,13 @@ test("a valid manifest with motion and a local demo is A, without the advisory c
   const report = await grade({ ...polishedFiles, "showcase.json": manifest });
   assert.equal(report.tier, "A");
   assert.equal(status(report, "media.capture"), "fail");
-  assert.deepEqual(report.nextSteps.map((step) => step.id), ["live"]);
+  assert.deepEqual(report.nextSteps.map((step) => step.id), ["live", "readme.motion"]);
   assert.match(report.nextSteps[0].hint, /in-browser terminal/);
 });
 
-const liveReadme = polishedFiles["README.md"].replace("## Quick start", "[Try it in your browser](https://demo.example.com/)\n\n## Quick start");
+const liveReadme = polishedFiles["README.md"]
+  .replace("docs/hero.png", "docs/loop.webp")
+  .replace("## Quick start", "[Try it in your browser](https://demo.example.com/)\n\n## Quick start");
 
 test("a reachable live URL is S", async () => {
   const report = await grade({ ...polishedFiles, "README.md": liveReadme, "showcase.json": { ...manifest, live: "https://demo.example.com" } });
@@ -50,16 +52,25 @@ test("S needs the live URL at the top of the README", async () => {
   const files = { ...polishedFiles, "showcase.json": { ...manifest, live: "https://demo.example.com" } };
   const missing = await grade(files);
   assert.equal(missing.tier, "A");
-  assert.deepEqual(missing.nextSteps.map((step) => step.id), ["live.readme"]);
+  assert.deepEqual(missing.nextSteps.map((step) => step.id), ["live.readme", "readme.motion"]);
   const below = await grade({ ...files, "README.md": `${polishedFiles["README.md"]}\n## Demo\n\nhttps://demo.example.com\n` });
   assert.equal(status(below, "live.readme"), "fail");
   const longer = await grade({ ...files, "README.md": liveReadme.replace("demo.example.com/", "demo.example.com.evil.net") });
   assert.equal(status(longer, "live.readme"), "fail");
 });
 
+test("S needs an animated hero at the top of the README", async () => {
+  const files = { ...polishedFiles, "showcase.json": { ...manifest, live: "https://demo.example.com" } };
+  const still = await grade({ ...files, "README.md": liveReadme.replace("docs/loop.webp", "docs/hero.png") });
+  assert.equal(still.tier, "A");
+  assert.deepEqual(still.nextSteps.map((step) => step.id), ["readme.motion"]);
+  const below = await grade({ ...files, "README.md": `${liveReadme.replace("docs/loop.webp", "docs/hero.png")}\n## Demo\n\n![Loop](docs/loop.webp)\n` });
+  assert.equal(status(below, "readme.motion"), "fail");
+});
+
 // What GitHub would list if the project's README and images were pushed as they are.
 async function githubMatching(project) {
-  const files = [project.readme.file, path.join(project.root, "docs/hero.png")];
+  const files = [project.readme.file, path.join(project.root, "docs/loop.webp")];
   const blobs = new Map(await Promise.all(files.map(async (file) => Object.values(await gitBlob(project.root, file)))));
   return { branch: "main", truncated: false, blobs };
 }
@@ -87,7 +98,7 @@ test("S needs GitHub to show the same README and images", async () => {
   assert.equal((await withFiles(async () => published)).tier, "S");
   const stale = await withFiles(async () => ({ ...published, blobs: new Map([["README.md", "0".repeat(40)]]) }));
   assert.equal(stale.tier, "A");
-  assert.equal(stale.nextSteps[0].detail, "on main: README.md differs, docs/hero.png missing");
+  assert.equal(stale.nextSteps[0].detail, "on main: README.md differs, docs/loop.webp missing");
   const unknown = await withFiles(async () => { throw new Error("rate limited"); });
   assert.equal(status(unknown, "readme.published"), "skip");
 });

@@ -292,6 +292,22 @@ export const checks = [
     hint: (project) => `Link ${manifestData(project)?.live} right under the pitch, above the first ## heading, so a visitor on GitHub sees it first.`,
   },
   {
+    id: "readme.motion",
+    guide: "media",
+    tier: "S",
+    label: "Animated hero at the top of the README",
+    run: async (project) => {
+      const { readme } = project;
+      if (!readme) return noReadme;
+      const base = path.dirname(readme.file);
+      for (const item of readme.media.filter((item) => item.line < readme.firstSectionLine)) {
+        if (await isMotion(project, { ...item, base })) return pass(path.basename(item.src.split(/[?#]/)[0]));
+      }
+      return fail("no looping WebP, GIF or video above the first section");
+    },
+    hint: () => "Show the looping WebP as the hero, right under the pitch and above the first ## heading, so a visitor sees the app in action first.",
+  },
+  {
     id: "live.homepage",
     guide: "demo",
     tier: "S",
