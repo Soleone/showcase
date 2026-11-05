@@ -13,7 +13,7 @@ A portfolio picks its projects in `portfolio.json` ([schema](../../schema/portfo
 }
 ```
 
-`roots` are the folders to scan for projects to review and `ignored` are ids someone decided against. Both are optional. Choosing is the person's job: decide which projects are in, never include or ignore on your own judgment unless asked.
+`roots` are the folders to scan for projects to review and `ignored` are ids someone decided against. `house` (a URL or path) names the portfolio's house style for live pages, its look and shared components; `showcase guide` and `showcase guide demo` point at it. All three are optional. Choosing is the person's job: decide which projects are in, never include or ignore on your own judgment unless asked.
 
 ## Finding the file
 

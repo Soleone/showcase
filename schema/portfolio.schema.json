@@ -16,6 +16,11 @@
       "items": { "type": "string", "minLength": 1 },
       "description": "Folders showcase scans for projects to review. ~ and $VARS are expanded. Each project is a folder in one of them, or in a folder inside one (like $SRC/category/project)."
     },
+    "house": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where this portfolio's house style for live pages is written: a URL or a path (~ and $VARS are expanded). showcase guide points at it, so agents follow it on top of the neutral rules."
+    },
     "ignored": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 },

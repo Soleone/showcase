@@ -57,13 +57,30 @@ test("buildTerminal mounts the project and takes its facts from showcase.json", 
   assert.match(await readFile(path.join(out, "index.html"), "utf8"), /webcontainer/i);
   await readFile(path.join(out, "seed.js"));
   const themes = await json(path.join(out, "themes.json"));
-  assert.equal(themes[0].name, "gilt");
+  assert.deepEqual(themes.map((theme) => theme.name), ["dark", "light"]);
+  assert.equal(await readFile(path.join(out, "skin.css"), "utf8"), "");
   for (const theme of themes) {
     for (const key of ["label", "mode", "page", "terminal", "surface", "line", "ink", "inkStrong", "muted", "accent"]) assert.ok(theme[key], `${theme.name}.${key}`);
     for (const key of ["red", "green", "yellow", "blue", "magenta", "cyan", "black", "white", "brightBlack", "brightWhite"]) assert.match(theme.ansi[key], /^#[0-9a-f]{6}$/, `${theme.name}.ansi.${key}`);
   }
   await readFile(path.join(out, "fonts/JetBrainsMonoNerdFontMono-Regular.woff2"));
   await assert.rejects(readFile(path.join(out, "fonts/build.sh")));
+});
+
+test("buildTerminal takes the page's look from a skin folder", async () => {
+  const theme = { name: "house", label: "House", mode: "dark" };
+  const root = await fixture({
+    ...recipeFiles,
+    "demo/browser/terminal.json": { ...recipeFiles["demo/browser/terminal.json"], skin: "../../skin" },
+    "skin/themes.json": [theme],
+    "skin/skin.css": "body { font-family: House; }\n",
+  });
+  const out = path.join(root, "dist");
+  await buildTerminal(path.join(root, "demo/browser"), out);
+
+  assert.deepEqual(await json(path.join(out, "themes.json")), [theme]);
+  assert.equal(await readFile(path.join(out, "skin.css"), "utf8"), "body { font-family: House; }\n");
+  assert.equal((await json(path.join(out, "terminal.json"))).skin, undefined);
 });
 
 test("buildTerminal explains a missing terminal.json", async () => {

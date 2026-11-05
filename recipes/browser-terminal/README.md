@@ -15,9 +15,10 @@ Keep the recipe folder in the project itself (`demo/browser/` by default), so th
 - `setup`: commands run before the shell opens, e.g. seeding sample data dated relative to today. Until they finish, a spinner stands in for the prompt and keys typed in the terminal are dropped, so nothing ends up in front of `start`.
 - `start`: a command typed into the shell once setup is done, to open the program right away (e.g. a TUI). The visitor sees it run and can run it again after quitting.
 - `onTheme`: a command run whenever the visitor picks a theme. Before it runs, the page writes `~/.config/showcase/theme.json` with the theme's colors and the full terminal palette (`palette`, as hex), so a program that draws its own colors can follow the page. The file is also written once before `setup`.
-- `welcome`, `hints` (buttons that type a command), `seed` (a browser module that adds files computed at visit time, such as dates relative to today), and overrides for `title`, `pitch`, `repo`, `disclosure`, `defaultTheme` (a name from `themes.json`, default `gilt`).
+- `welcome`, `hints` (buttons that type a command), `seed` (a browser module that adds files computed at visit time, such as dates relative to today), and overrides for `title`, `pitch`, `repo`, `disclosure`, `defaultTheme` (a name from `themes.json`, default the first).
+- `skin`: a folder or URL with the page's look, `themes.json` (palettes, same shape as the recipe's own) and `skin.css` (fonts and other touches, loaded after the page's styles). Either may be left out. Without a skin the page is plain: a dark and a light theme and system fonts.
 
-The output is static: `index.html`, `files.json`, `terminal.json`, `themes.json`, `fonts/` and a `vercel.json` with the COOP/COEP headers the sandbox needs.
+The output is static: `index.html`, `files.json`, `terminal.json`, `themes.json`, `skin.css`, `fonts/` and a `vercel.json` with the COOP/COEP headers the sandbox needs.
 
 The terminal font is JetBrainsMono Nerd Font Mono, self-hosted as WOFF2 (about 600 KB per weight) so CLI icons render. `fonts/build.sh` rebuilds it from a pinned Nerd Fonts release, keeping the Basic Multilingual Plane and dropping the Material Design plane.
 
@@ -30,4 +31,4 @@ Sandbox quirks found so far:
 
 WebContainers is free for personal and open-source use; check the StackBlitz license before using it commercially.
 
-The page has a theme picker (23 palettes, remembered in the visitor's browser). A theme colors the page and the terminal's 16 ANSI colors together, so whatever the CLI prints follows it. `themes.json` holds the resolved colors of each palette, derived from omarchy `colors.toml` files.
+The page has a theme picker when there is more than one theme (the choice is remembered in the visitor's browser). A theme colors the page and the terminal's 16 ANSI colors together, so whatever the CLI prints follows it; the bright colors are derived from the normal ones.

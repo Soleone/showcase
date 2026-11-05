@@ -1,13 +1,25 @@
 {
   "project": "../..",
+  "skin": "https://raw.githubusercontent.com/Soleone/showcase-live-kit/main/terminal",
   "pitch": "Grade how demoable a project is, from D to S. This is the real CLI, running in your browser on four sample projects.",
   "mount": {
     "node_modules/@soleone/showcase": {
       "from": "../..",
-      "include": ["bin", "src", "schema", "package.json", "README.md", "LICENSE"]
+      "include": [
+        "bin",
+        "src",
+        "schema",
+        "package.json",
+        "README.md",
+        "LICENSE"
+      ]
     },
-    "projects": { "from": "../projects" },
-    ".": { "from": "./home" }
+    "projects": {
+      "from": "../projects"
+    },
+    ".": {
+      "from": "./home"
+    }
   },
   "env": {
     "PATH": "~/bin:/usr/local/bin:/usr/bin:/bin"

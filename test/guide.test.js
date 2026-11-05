@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { readdir, readFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -27,6 +28,17 @@ test("guide prints each topic", async () => {
     assert.equal(code, undefined, topic.name);
     assert.match(stdout, /^# /, topic.name);
   }
+});
+
+test("guide and guide demo point at the portfolio's house style", async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), "showcase-house-"));
+  const config = path.join(dir, "portfolio.json");
+  await writeFile(config, JSON.stringify({ house: "https://example.com/house", projects: [] }));
+  const env = { ...process.env, SHOWCASE_CONFIG: config };
+  const show = (...args) => promisify(execFile)(process.execPath, [bin, ...args], { env });
+  assert.match((await show("guide")).stdout, /## House style\n\n.*https:\/\/example\.com\/house/);
+  assert.match((await show("guide", "demo")).stdout, /https:\/\/example\.com\/house/);
+  assert.doesNotMatch((await show("guide", "pitch")).stdout, /House style/);
 });
 
 test("guide rejects an unknown topic and names the real ones", async () => {

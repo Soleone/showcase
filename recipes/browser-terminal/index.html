@@ -13,8 +13,6 @@
   <link rel="preload" href="themes.json" as="fetch" crossorigin>
   <link rel="preload" href="fonts/JetBrainsMonoNerdFontMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/JetBrainsMonoNerdFontMono-Bold.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@6.0.0/css/xterm.css" crossorigin>
   <script>
     // Puts the visitor's theme on before first paint (themes.js saves the resolved colors when one is picked).
@@ -38,46 +36,48 @@
       font-weight: 700;
       font-display: block;
     }
-    /* The fallback look, gold on cool obsidian, until themes.json has applied a theme. */
+    /* The plain look until themes.json has applied a theme. A skin (skin.css, themes.json) brings its own. */
     :root {
       color-scheme: dark;
-      --page: #0D0F12;
-      --ink: #D8D1C0;
-      --ink-strong: #F5EBD2;
-      --muted: #918977;
-      --accent: #D4AF37;
-      --surface: #181B20;
-      --line: #342D1B;
-      --terminal: #090A0C;
+      --page: #111113;
+      --ink: #d4d4d8;
+      --ink-strong: #fafafa;
+      --muted: #a1a1aa;
+      --accent: #60a5fa;
+      --surface: #1c1c1f;
+      --line: #2e2e33;
+      --terminal: #0b0b0c;
     }
     @media (prefers-color-scheme: light) {
       :root:not([data-theme="dark"]) {
         color-scheme: light;
-        --page: #F5EBD2;
-        --ink: #0D0F12;
-        --ink-strong: #0D0F12;
-        --muted: #716957;
-        --accent: #8A6240;
-        --surface: #E6DECB;
-        --line: #D8D1C0;
+        --page: #fafafa;
+        --ink: #27272a;
+        --ink-strong: #09090b;
+        --muted: #52525b;
+        --accent: #2563eb;
+        --surface: #f4f4f5;
+        --line: #e4e4e7;
+        --terminal: #ffffff;
       }
     }
     :root[data-theme="light"] {
       color-scheme: light;
-      --page: #F5EBD2;
-      --ink: #0D0F12;
-      --ink-strong: #0D0F12;
-      --muted: #716957;
-      --accent: #8A6240;
-      --surface: #E6DECB;
-      --line: #D8D1C0;
+      --page: #fafafa;
+      --ink: #27272a;
+      --ink-strong: #09090b;
+      --muted: #52525b;
+      --accent: #2563eb;
+      --surface: #f4f4f5;
+      --line: #e4e4e7;
+      --terminal: #ffffff;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; }
     body {
       background: var(--page);
       color: var(--ink);
-      font: 16px/1.5 Geist, ui-sans-serif, system-ui, sans-serif;
+      font: 16px/1.5 ui-sans-serif, system-ui, sans-serif;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
@@ -90,7 +90,7 @@
     .tools { display: flex; align-items: center; gap: 16px; position: relative; }
     .repo { font-size: 15px; white-space: nowrap; }
     #theme-button {
-      font: 13px/1 Geist, ui-sans-serif, system-ui, sans-serif;
+      font: inherit; font-size: 13px; line-height: 1;
       display: inline-flex; align-items: center; gap: 8px;
       background: var(--surface); color: var(--ink);
       border: 1px solid var(--line); border-radius: 6px; padding: 8px 11px; cursor: pointer;
@@ -142,6 +142,7 @@
       .panel { min-height: 380px; padding: 8px 2px 2px 8px; }
     }
   </style>
+  <link rel="stylesheet" href="skin.css">
 </head>
 <body>
   <header>

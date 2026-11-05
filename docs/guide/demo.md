@@ -12,6 +12,17 @@ S means someone can try it for real with one click. What that means depends on `
 
 Anything that needs an account, a domain or a deploy is the person's step: prepare it and hand over the exact commands. If nothing can be hosted, set `ceiling`.
 
+## The live page
+
+Whatever the route, a live page:
+
+- shows the real thing working on the first screen, with no sign-up and nothing to set up;
+- says plainly what is simulated (sample data, canned replies, a stand-in service), taken from `demo.externals`;
+- has one obvious way to get the real thing (install, download or open the app), in the same place on every page of the portfolio;
+- links the source.
+
+How it looks is up to the portfolio. If `showcase guide` names a house style, use its components and look rather than building your own.
+
 ## Sample data
 
 Realistic and specific, never lorem ipsum, never the person's private data. Content you did not write needs a clear license; prefer CC0 (OpenGameArt, Freesound and similar). Finding content that is both free and good takes longer than expected. When the content is a matter of taste (a song, a level, a dataset), shortlist a few and let the person choose.

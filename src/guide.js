@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { findConfig } from "./manage.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 
@@ -27,5 +28,15 @@ export async function guide(name) {
   const file = path.join(root, topic?.file ?? "docs/guide/index.md");
   const text = absoluteLinks(await readFile(file, "utf8"), path.dirname(file));
   const list = topics.map((candidate) => `- \`${candidate.name}\`: ${candidate.summary}`).join("\n");
-  return text.replace("{{topics}}", list).trimEnd();
+  const page = text.replace("{{topics}}", list).trimEnd();
+  if (topic && topic.name !== "demo") return page;
+  const house = await houseStyle();
+  return house ? `${page}\n\n## House style\n\nThis portfolio has a house style for live pages: read ${house} and follow it on top of this guide.` : page;
+}
+
+// The portfolio's `house`, when the portfolio in use names one.
+async function houseStyle() {
+  const { file, exists } = await findConfig();
+  if (!exists) return null;
+  return JSON.parse(await readFile(file, "utf8")).house ?? null;
 }

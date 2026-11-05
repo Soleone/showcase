@@ -51,11 +51,28 @@ function disclosure(title, externals = []) {
   return [`The real ${title} runs in a Node.js sandbox in your browser (WebContainers).`, ...notes, "Reload to start over."].join(" ");
 }
 
+// A skin is a folder or URL with the page's look: themes.json (the palettes) and skin.css (anything else, such
+// as fonts). Either file may be left out; the recipe's plain look fills in.
+async function skinFile(skin, name, recipeDir) {
+  if (!skin) return null;
+  if (/^https?:\/\//.test(skin)) {
+    const url = `${skin.replace(/\/$/, "")}/${name}`;
+    const response = await fetch(url);
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(`${url}: ${response.status}`);
+    return response.text();
+  }
+  return readFile(path.join(resolvePath(skin, recipeDir), name), "utf8").catch((error) => {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  });
+}
+
 export async function buildTerminal(recipeDir, out) {
   recipeDir = path.resolve(recipeDir);
   out = path.resolve(out);
   const recipeFile = path.join(recipeDir, "terminal.json");
-  const { mount, project, ...recipe } = JSON.parse(await readFile(recipeFile, "utf8").catch(() => {
+  const { mount, project, skin, ...recipe } = JSON.parse(await readFile(recipeFile, "utf8").catch(() => {
     throw new Error(`No terminal.json in ${recipeDir}. See recipes/browser-terminal/README.md.`);
   }));
   if (!mount) throw new Error(`${recipeFile}: mount is required`);
@@ -71,7 +88,8 @@ export async function buildTerminal(recipeDir, out) {
   }
   await mkdir(out, { recursive: true });
   await copyFile(path.join(assets, "index.html"), path.join(out, "index.html"));
-  await copyFile(path.join(assets, "themes.json"), path.join(out, "themes.json"));
+  await writeFile(path.join(out, "themes.json"), await skinFile(skin, "themes.json", recipeDir) ?? await readFile(path.join(assets, "themes.json")));
+  await writeFile(path.join(out, "skin.css"), await skinFile(skin, "skin.css", recipeDir) ?? "");
   await cp(path.join(assets, "fonts"), path.join(out, "fonts"), { recursive: true, filter: (source) => !source.endsWith(".sh") });
   await writeFile(path.join(out, "files.json"), JSON.stringify(files));
   if (config.seed) await copyFile(path.join(recipeDir, config.seed), path.join(out, config.seed));
@@ -85,7 +103,7 @@ export async function buildTerminal(recipeDir, out) {
   return { out, bytes: JSON.stringify(files).length };
 }
 
-const types = { ".html": "text/html; charset=utf-8", ".json": "application/json", ".js": "text/javascript", ".woff2": "font/woff2", ".txt": "text/plain" };
+const types = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json", ".js": "text/javascript", ".woff2": "font/woff2", ".txt": "text/plain" };
 
 // Serves a built page on this machine only, with the headers the sandbox needs.
 export function serveTerminal(out, port = 4321) {
