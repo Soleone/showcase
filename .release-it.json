@@ -26,7 +26,8 @@
           { "type": "perf", "section": "Performance" }
         ]
       },
-      "infile": "CHANGELOG.md"
+      "infile": "CHANGELOG.md",
+      "ignoreRecommendedBump": true
     }
   }
 }
