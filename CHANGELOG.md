@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.0](https://github.com/Soleone/showcase/compare/v0.3.0...v0.4.0) (2026-11-05)
+
+### Features
+
+* **terminal:** the page's look comes from a skin, and a portfolio can name its house style ([50805b4](https://github.com/Soleone/showcase/commit/50805b430b529bac62b34655a1a98b4b127fffcb))
+
 ## [0.3.0](https://github.com/Soleone/showcase/compare/v0.2.0...v0.3.0) (2026-11-03)
 
 ### Features
