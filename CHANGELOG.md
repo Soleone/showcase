@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0](https://github.com/Soleone/showcase/compare/v0.4.0...v0.5.0) (2026-11-06)
+
+### ⚠ BREAKING CHANGES
+
+* `showcase terminal` and `@soleone/showcase/capture` are removed.
+Use `showcase-terminal` and `import { record } from "@soleone/showcase-capture"`.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+### Features
+
+* showcase is the standard; the terminal and the recorder are their own packages ([6dc2d48](https://github.com/Soleone/showcase/commit/6dc2d48585eccfc80884d66cd2c0ff882c7cda6a))
+
 ## [0.4.0](https://github.com/Soleone/showcase/compare/v0.3.0...v0.4.0) (2026-11-05)
 
 ### Features
