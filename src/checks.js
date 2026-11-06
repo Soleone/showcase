@@ -258,7 +258,7 @@ export const checks = [
   },
   {
     id: "live",
-    guide: (project) => project.kind === "cli" ? "terminal" : "demo",
+    guide: "demo",
     tier: "S",
     label: "Live: one click to try it for real",
     run: async (project, options) => {
@@ -369,8 +369,7 @@ export async function evaluate(project, options = {}) {
   for (const check of checks) {
     const result = await check.run(project, options);
     const failing = result.status !== "pass";
-    const guide = typeof check.guide === "function" ? check.guide(project) : check.guide;
-    results.push({ id: check.id, tier: check.tier, label: check.label, required: check.required !== false, ...result, hint: failing ? check.hint(project, result) : null, guide: failing ? guide : null });
+    results.push({ id: check.id, tier: check.tier, label: check.label, required: check.required !== false, ...result, hint: failing ? check.hint(project, result) : null, guide: failing ? check.guide : null });
   }
 
   let tier = "D";

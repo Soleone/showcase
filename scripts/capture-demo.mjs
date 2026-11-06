@@ -6,8 +6,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { record } from "../src/capture.js";
-import { buildTerminal, serveTerminal } from "../src/terminal.js";
+import { record } from "@soleone/showcase-capture";
+import { buildTerminal, serveTerminal } from "@soleone/showcase-terminal";
 
 const exec = promisify(execFile);
 const media = path.resolve("docs/media");

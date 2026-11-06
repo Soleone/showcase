@@ -12,7 +12,6 @@ import { inspectMotion, runCapture } from "../src/inspect.js";
 import { loadPortfolio } from "../src/collect.js";
 import { loadProject } from "../src/project.js";
 import { formatInspection, formatMatrix, formatReport, formatSummary } from "../src/report.js";
-import { buildTerminal, serveTerminal } from "../src/terminal.js";
 import { run as manage } from "../src/tui.js";
 
 const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
@@ -37,8 +36,6 @@ Usage:
   showcase ignore <id...>    Decide against projects so they leave the review queue
   showcase unignore <id...>  Put them back in the queue
   showcase capture [path]    Re-record the media with media.capture, then check media.motion
-  showcase terminal [recipe] Build the in-browser terminal demo for a CLI from a folder
-                             with terminal.json (default demo/browser)
   showcase guide [topic]     How to make a project demoable, written for agents and people;
                              start with no topic, every failing check names the one it needs
 
@@ -55,10 +52,7 @@ Options:
   --no-github    Do not ask GitHub, scan folders only (discover)
   --stage <s>    product, prototype or proof of concept, saved in its showcase.json (set)
   --offline      Do not request the live URL or GitHub (check, collect, manage)
-  --out <dir>    Where to write feed.json and media/ (collect), or the page
-                 (terminal, default dist/browser)
-  --serve        Serve the page on 127.0.0.1 after building it (terminal)
-  --port <n>     Port for --serve (default 4321)
+  --out <dir>    Where to write feed.json and media/ (collect)
   --min <tier>   Exit with status 1 if any project is below this tier (check)
   --force        Overwrite an existing showcase.json (init)
   --dry-run      Print the draft without writing it (init)
@@ -105,17 +99,6 @@ async function capture(paths, values) {
   const results = await inspectMotion(project, media.motion, { since });
   console.log(`${media.motion}\n${formatInspection(results)}`);
   if (results.some((result) => result.status === "fail")) process.exitCode = 1;
-}
-
-async function terminal(paths, values) {
-  if (paths.length > 1) throw new Error("terminal takes a single recipe folder");
-  const { out, bytes } = await buildTerminal(paths[0] ?? "demo/browser", values.out ?? "dist/browser");
-  console.log(`Built ${out} (${Math.round(bytes / 1024)} KB of files)`);
-  if (!values.serve) return;
-  const port = Number(values.port ?? 4321);
-  if (!Number.isInteger(port)) throw new Error("--port must be a number");
-  await serveTerminal(out, port);
-  console.log(`Serving at http://127.0.0.1:${port} (Ctrl-C to stop)`);
 }
 
 // The portfolio file for scripts: --config, else the same lookup manage uses.
@@ -217,8 +200,6 @@ async function main() {
       root: { type: "string", multiple: true },
       status: { type: "string" },
       "no-github": { type: "boolean" },
-      serve: { type: "boolean" },
-      port: { type: "string" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean" },
     },
@@ -233,7 +214,6 @@ async function main() {
     if (paths.length > 1) throw new Error("manage takes a single portfolio.json");
     return manage({ configFile: paths[0], offline: values.offline });
   }
-  if (command === "terminal") return terminal(paths, values);
   if (command === "guide") {
     if (paths.length > 1) throw new Error("guide takes a single topic");
     return console.log(await guide(paths[0]));

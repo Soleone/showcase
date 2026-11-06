@@ -2,7 +2,7 @@
 
 S means someone can try it for real with one click. What that means depends on `kind`, and it is set in `demo.strategy`:
 
-- `cli`: `browser-terminal`. `showcase terminal` builds a static page that runs the real CLI in the browser. See `showcase guide terminal`.
+- `cli`: `browser-terminal`, a static page that runs the real CLI in the browser with sample data. One way to build it is [showcase-terminal](https://github.com/Soleone/showcase-terminal) (WebContainers); its README covers `terminal.json` and the sandbox's quirks.
 - `web-app`: `hosted`, with the first visit already good (below).
 - `browser-extension`: `store-listing`.
 - `local-web-app`, `agent-extension`: `replay` of a real recorded session.

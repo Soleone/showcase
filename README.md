@@ -16,7 +16,6 @@ showcase check ~/code/a ~/code/b --verbose
 showcase check ~/code/a ~/code/b --matrix   # every check against every project
 showcase init                 # draft showcase.json from the README and package.json
 showcase capture              # re-record the media with media.capture and check the loop
-showcase terminal --serve     # build the in-browser terminal demo for a CLI
 showcase manage               # find, review, grade and edit your projects; no setup
 showcase guide                # how to make a project demoable, for agents and people
 ```
@@ -25,7 +24,7 @@ No dependencies; needs Node 22 or later.
 
 ## With an agent
 
-The CLI teaches an agent how to use it, so there is nothing to install beyond showcase. Tell your agent to run `showcase guide` (or `npx @soleone/showcase guide`), or add that line to your AGENTS.md. It prints the loop, the tiers and what to ask you first, plus a list of topics (`showcase guide media`, `terminal`, `portfolio` and more) that the agent reads only when a step needs one. Every failing check names the topic that helps.
+The CLI teaches an agent how to use it, so there is nothing to install beyond showcase. Tell your agent to run `showcase guide` (or `npx @soleone/showcase guide`), or add that line to your AGENTS.md. It prints the loop, the tiers and what to ask you first, plus a list of topics (`showcase guide media`, `demo`, `portfolio` and more) that the agent reads only when a step needs one. Every failing check names the topic that helps.
 
 If you would rather have your agent find it by itself, the package also ships a tiny `showcase` skill that only says "run `showcase guide`":
 
@@ -143,10 +142,10 @@ Each takes `--config <file>` to use another portfolio.
 
 Set `media.capture` to the command that re-records your screenshots and loops, and `showcase capture` runs it, then checks `media.motion`: animated, loops forever, at least 640 px wide, 3 to 30 s, under 3 MB. `--no-record` checks the file you have.
 
-For a web app, `@soleone/showcase/capture` writes that command for you, minus the parts only your app knows. It records a fresh browser session with [agent-browser](https://github.com/vercel-labs/agent-browser) and encodes a looping WebP with FFmpeg (both on the PATH); you write how to start, drive and judge a take:
+Any recorder works. For a web app, [showcase-capture](https://github.com/Soleone/showcase-capture) writes that command for you, minus the parts only your app knows. It records a fresh browser session with [agent-browser](https://github.com/vercel-labs/agent-browser) and encodes a looping WebP with FFmpeg (both on the PATH); you write how to start, drive and judge a take:
 
 ```js
-import { record } from "@soleone/showcase/capture";
+import { record } from "@soleone/showcase-capture";
 
 await record({
   url: "https://your-app.example.com",
@@ -162,13 +161,13 @@ await record({
 
 ## Try a CLI in the browser
 
-For a CLI, S means a visitor can run it. `showcase terminal` builds a static page that runs your real CLI in a Node.js sandbox in the browser ([WebContainers](https://webcontainers.io)), with sample data and stand-ins for anything it cannot reach:
+For a CLI, S means a visitor can run it: a static page that runs your real CLI in the browser, with sample data and stand-ins for anything it cannot reach. [showcase-terminal](https://github.com/Soleone/showcase-terminal) builds one in a Node.js sandbox ([WebContainers](https://webcontainers.io)) from a `terminal.json` and your `showcase.json`:
 
 ```sh
-showcase terminal --serve   # builds demo/browser/terminal.json into dist/browser
+npx @soleone/showcase-terminal --serve   # builds demo/browser/terminal.json into dist/browser
 ```
 
-Deploy `dist/browser` to any static host; it includes a `vercel.json` with the headers the sandbox needs. [recipes/browser-terminal](recipes/browser-terminal/README.md) explains `terminal.json` and the sandbox's quirks, and showcase's own demo in [demo/browser](demo/browser/terminal.json) is a working example.
+showcase's own demo in [demo/browser](demo/browser/terminal.json) is a working example.
 
 ## Scripting
 

@@ -12,7 +12,6 @@ export const topics = [
   { name: "brand", file: "docs/guide/brand.md", summary: "brand: icon, logo, wordmark and colors, and where a favicon comes from (not graded)" },
   { name: "demo", file: "docs/guide/demo.md", summary: "the demo route for each kind, sample data, seeding a web app, hosting (A and S)" },
   { name: "media", file: "docs/guide/media.md", summary: "motion: scripting and checking the recording (A)" },
-  { name: "terminal", file: "recipes/browser-terminal/README.md", summary: "the S route for a CLI: the in-browser terminal and terminal.json" },
   { name: "portfolio", file: "docs/guide/portfolio.md", summary: "portfolio.json, add, set, list, collect, and how priority sets the goal" },
 ];
 

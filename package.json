@@ -26,7 +26,6 @@
     "access": "public"
   },
   "exports": {
-    "./capture": "./src/capture.js",
     "./package.json": "./package.json"
   },
   "bin": {
@@ -36,7 +35,6 @@
     "bin/",
     "src/",
     "schema/",
-    "recipes/",
     "skills/",
     "docs/guide/",
     "README.md",
@@ -45,7 +43,7 @@
   "scripts": {
     "test": "node --test",
     "demo": "node bin/showcase.js check demo/projects/*",
-    "demo:browser": "node bin/showcase.js terminal --serve",
+    "demo:browser": "showcase-terminal --serve",
     "media:capture": "node scripts/capture-demo.mjs",
     "release": "release-it",
     "release:dry-run": "npm test && release-it --dry-run"
@@ -57,6 +55,8 @@
   },
   "devDependencies": {
     "@release-it/conventional-changelog": "^10.0.6",
+    "@soleone/showcase-capture": "^0.1.0",
+    "@soleone/showcase-terminal": "^0.1.0",
     "release-it": "^19.2.4"
   },
   "overrides": {

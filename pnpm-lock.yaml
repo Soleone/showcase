@@ -11,6 +11,12 @@ importers:
       '@release-it/conventional-changelog':
         specifier: ^10.0.6
         version: 10.0.6(conventional-commits-filter@5.0.0)(conventional-commits-parser@6.4.0)(release-it@19.2.4)
+      '@soleone/showcase-capture':
+        specifier: ^0.1.0
+        version: 0.1.0
+      '@soleone/showcase-terminal':
+        specifier: ^0.1.0
+        version: 0.1.0
       release-it:
         specifier: ^19.2.4
         version: 19.2.4
@@ -245,6 +251,15 @@ packages:
   '@simple-libs/stream-utils@1.2.0':
     resolution: {integrity: sha512-KxXvfapcixpz6rVEB6HPjOUZT22yN6v0vI0urQSk1L8MlEWPDFCZkhw2xmkyoTGYeFw7tWTZd7e3lVzRZRN/EA==}
     engines: {node: '>=18'}
+
+  '@soleone/showcase-capture@0.1.0':
+    resolution: {integrity: sha512-tOEzyR8/mHG8U/7Jlg+zLYfK2XkOyI7Fw4cJx44bzZTrtc4KwHjt487vB1U+bAIWJ6fjca2p8z4pvcPKg12EhQ==}
+    engines: {node: '>=22'}
+
+  '@soleone/showcase-terminal@0.1.0':
+    resolution: {integrity: sha512-SdHmaHR7j7E2sLmbzJgrLJKPzJmDj3STtfQjsx3MJ8r5d98I+3RgpUneW/ZZEwpe8+gGVnfIqTDI6kOACUXG+Q==}
+    engines: {node: '>=22'}
+    hasBin: true
 
   '@tootallnate/quickjs-emscripten@0.23.0':
     resolution: {integrity: sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==}
@@ -1172,6 +1187,10 @@ snapshots:
   '@simple-libs/hosted-git-info@1.0.2': {}
 
   '@simple-libs/stream-utils@1.2.0': {}
+
+  '@soleone/showcase-capture@0.1.0': {}
+
+  '@soleone/showcase-terminal@0.1.0': {}
 
   '@tootallnate/quickjs-emscripten@0.23.0': {}
 
